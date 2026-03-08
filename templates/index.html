@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>仓库管理系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        /* 顶部导航栏 */
+        .top-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .top-header h1 { 
+            font-size: 1.8em; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: none;
+        }
+        
+        /* 主容器 */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+        
+        /* 左侧导航栏 */
+        .sidebar {
+            width: 220px;
+            background: #2c3e50;
+            color: white;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-section {
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 12px;
+            color: #95a5a6;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        
+        .nav-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #ecf0f1;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-left-color: #667eea;
+        }
+        
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.2) 0%, transparent 100%);
+            border-left-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .nav-item .icon {
+            font-size: 18px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* 右侧内容区 */
+        .content-area {
+            flex: 1;
+            background: white;
+            overflow-y: auto;
+            padding: 30px;
+        }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .tab-content h2 {
+            color: #2c3e50;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            border-bottom: 3px solid #667eea;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border 0.3s;
+        }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #667eea; }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+            margin-right: 10px;
+        }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4); }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-danger:hover { 
+            transform: translateY(-1px); 
+            box-shadow: 0 3px 10px rgba(220, 53, 69, 0.4); 
+        }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; font-weight: bold; }
+        tr:hover { background: #f5f5f5; }
+        
+        .message {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .badge {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge.in { background: #d4edda; color: #155724; }
+        .badge.out { background: #f8d7da; color: #721c24; }
+        .badge.production { background: #cfe2ff; color: #084298; }
+        .badge.shipment { background: #d1ecf1; color: #0c5460; }
+        .badge.defect { background: #fff3cd; color: #856404; }
+        .badge.component { background: #cfe2ff; color: #084298; }
+        .badge.finished { background: #d1e7dd; color: #0f5132; }
+        
+        .component-list { 
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 5px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+        .component-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            position: relative;
+            z-index: 1; /* Base z-index for items */
+        }
+        .component-item:focus-within {
+            z-index: 100; /* Raise z-index when input is focused */
+        }
+        
+        /* 编辑弹窗中的配件列表样式 */
+        #edit-components-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        #edit-components-section label {
+            font-size: 16px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        #edit-component-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        
+        /* 添加产品页面的配件配置区域 */
+        #components-section {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        #components-section label {
+            font-size: 16px;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        #component-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .component-item select, .component-item input { flex: 1; }
+        .component-item button { padding: 8px 15px; }
+        
+        #defect-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            border-radius: 10px;
+        }
+        
+        .action-btn {
+            padding: 5px 10px;
+            margin: 0 2px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .edit-btn {
+            background: #0d6efd;
+        }
+        .delete-btn {
+            background: #dc3545;
+        }
+        
+        /* 自动完成样式 */
+        .autocomplete-container {
+            position: relative;
+            z-index: 10; /* Ensure autocomplete container is above siblings */
+        }
+        .autocomplete-input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .autocomplete-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .autocomplete-list {
+            position: fixed; /* Changed from absolute to fixed */
+            max-height: 200px;
+            overflow-y: auto;
+            background: white;
+            border: 2px solid #667eea;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            z-index: 10000; /* Very high z-index to ensure it's on top */
+            display: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .autocomplete-item:hover {
+            background: #f0f0f0;
+        }
+        .autocomplete-item.selected {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <div class="top-header">
+        <h1>📦 仓库管理系统</h1>
+        <div class="user-info">
+            <span id="current-user" style="font-size: 14px;"></span>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+    
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <div class="nav-section">
+                <div class="nav-section-title">库存管理</div>
+                <div class="nav-item active" onclick="showTab('inventory')" data-tab="inventory">
+                    <span class="icon">📦</span>
+                    <span>库存查询</span>
+                </div>
+                <div class="nav-item" onclick="showTab('add-product')" data-tab="add-product">
+                    <span class="icon">➕</span>
+                    <span>添加产品</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">出入库管理</div>
+                <div class="nav-item" onclick="showTab('stock-in')" data-tab="stock-in">
+                    <span class="icon">📥</span>
+                    <span>配件入库</span>
+                </div>
+                <div class="nav-item" onclick="showTab('stock-out')" data-tab="stock-out">
+                    <span class="icon">📤</span>
+                    <span>生产出库</span>
+                </div>
+                <div class="nav-item" onclick="showTab('defects')" data-tab="defects">
+                    <span class="icon">⚠️</span>
+                    <span>配件损耗</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">销售管理</div>
+                <div class="nav-item" onclick="showTab('shipment')" data-tab="shipment">
+                    <span class="icon">🚚</span>
+                    <span>成品发货</span>
+                </div>
+                <div class="nav-item" onclick="showTab('shipment-records')" data-tab="shipment-records">
+                    <span class="icon">📋</span>
+                    <span>发货记录</span>
+                </div>
+            </div>
+            
+            <div class="nav-section">
+                <div class="nav-section-title">统计查询</div>
+                <div class="nav-item" onclick="showTab('history')" data-tab="history">
+                    <span class="icon">📊</span>
+                    <span>交易历史</span>
+                </div>
+            </div>
+            
+            <div class="nav-section" id="admin-section" style="display:none;">
+                <div class="nav-section-title">系统管理</div>
+                <div class="nav-item" id="customer-mgmt-nav" onclick="showTab('customers')" data-tab="customers" style="display:none;">
+                    <span class="icon">👥</span>
+                    <span>客户管理</span>
+                </div>
+                <div class="nav-item" id="user-mgmt-nav" onclick="showTab('users')" data-tab="users" style="display:none;">
+                    <span class="icon">👤</span>
+                    <span>用户管理</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧内容区 -->
+        <div class="content-area">
+            <!-- 库存管理 -->
+            <div id="inventory" class="tab-content active">
+                <h2>📊 当前库存</h2>
+                <div style="margin-bottom: 15px;">
+                    <button onclick="loadInventory()">🔄 刷新</button>
+                    <button onclick="loadInventory('COMPONENT')">配件</button>
+                    <button onclick="loadInventory('FINISHED')">成品</button>
+                    <input type="text" id="inventory-search" placeholder="搜索产品名称..." style="margin-left: 20px; padding: 8px; width: 250px;">
+                    <button onclick="searchInventory()">🔍 搜索</button>
+                    <button onclick="clearInventorySearch()">清除</button>
+                </div>
+                <table id="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>产品ID</th>
+                            <th>产品名称</th>
+                            <th>类型</th>
+                            <th>库存数量</th>
+                            <th>单位</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div id="inventory-pagination" style="margin-top: 15px; text-align: center;"></div>
+            </div>
+
+            
+            <!-- 添加产品 -->
+            <div id="add-product" class="tab-content">
+                <h2>➕ 添加新产品</h2>
+                <div id="add-product-message" class="message"></div>
+                <form onsubmit="addProduct(event)">
+                    <div class="form-group">
+                        <label>产品名称 *</label>
+                        <input type="text" id="product-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>产品类型 *</label>
+                        <select id="product-type" onchange="toggleComponents()" required>
+                            <option value="">-- 请选择 --</option>
+                            <option value="COMPONENT">配件</option>
+                            <option value="FINISHED">成品</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>单位 *</label>
+                        <input type="text" id="product-unit" placeholder="如: 个/箱/kg" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea id="product-description" rows="2"></textarea>
+                    </div>
+                    <div id="components-section" style="display:none;">
+                        <label>配件配置</label>
+                        <div id="component-list" class="component-list"></div>
+                        <button type="button" onclick="addComponentRow()">+ 添加配件</button>
+                    </div>
+                    <br><br>
+                    <button type="submit">添加产品</button>
+                </form>
+            </div>
+            
+            <!-- 入库 -->
+            <div id="stock-in" class="tab-content">
+                <h2>📥 配件入库</h2>
+                <div id="stock-in-message" class="message"></div>
+                <form onsubmit="stockIn(event)">
+                    <div class="form-group">
+                        <label>选择配件 * (可输入搜索)</label>
+                        <div class="autocomplete-container">
+                            <input type="text" id="in-product-name" class="autocomplete-input" 
+                                   placeholder="输入配件名称搜索..." required autocomplete="off">
+                            <div id="in-product-list" class="autocomplete-list"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>入库数量 *</label>
+                        <input type="number" id="in-quantity" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea id="in-note" rows="2"></textarea>
+                    </div>
+                    <button type="submit">确认入库</button>
+                </form>
+            </div>
+            
+            <!-- 出库 -->
+            <div id="stock-out" class="tab-content">
+                <h2>📤 生产出库</h2>
+                <div id="stock-out-message" class="message"></div>
+                <form onsubmit="stockOut(event)">
+                    <div class="form-group">
+                        <label>选择要生产的成品 *</label>
+                        <select id="out-product-name" required>
+                            <option value="">-- 请选择成品 --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>生产人员分配 *</label>
+                        <div id="assignment-list" class="component-list"></div>
+                        <button type="button" onclick="addAssignmentRow()">+ 添加生产人员</button>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea id="out-note" rows="2"></textarea>
+                    </div>
+                    <button type="submit">开始生产（配件出库）</button>
+                </form>
+            </div>
+            
+            <!-- 成品发货 -->
+            <div id="shipment" class="tab-content">
+                <h2>🚚 成品发货</h2>
+                <div id="shipment-message" class="message"></div>
+                <form onsubmit="createShipment(event)">
+                    <div class="form-group">
+                        <label>客户名称 *</label>
+                        <select id="shipment-customer" required>
+                            <option value="">请选择客户</option>
+                        </select>
+                        <small style="color: #666;">如需添加新客户，请前往"客户管理"页面</small>
+                    </div>
+                    <div class="form-group">
+                        <label>发货产品列表 *</label>
+                        <div id="shipment-list" class="component-list"></div>
+                        <button type="button" onclick="addShipmentRow()">+ 添加成品</button>
+                    </div>
+                    <div class="form-group">
+                        <label>备注</label>
+                        <textarea id="shipment-note" rows="2" placeholder="如：订单号、运输方式等"></textarea>
+                    </div>
+                    <button type="submit">确认发货</button>
+                </form>
+            </div>
+            
+            <!-- 发货记录 -->
+            <div id="shipment-records" class="tab-content">
+                <h2>📋 发货记录</h2>
+                <div class="filter-bar">
+                    <select id="shipment-customer-filter" style="width: 200px;">
+                        <option value="">全部客户</option>
+                    </select>
+                    <label style="margin-left: 15px;">开始日期：</label>
+                    <input type="date" id="shipment-start-date" style="width: 150px;">
+                    <label style="margin-left: 10px;">结束日期：</label>
+                    <input type="date" id="shipment-end-date" style="width: 150px;">
+                    <button onclick="loadShipmentHistory()">🔍 查询</button>
+                    <button onclick="clearShipmentFilters()">清除筛选</button>
+                    <button onclick="exportShipments()">📥 导出Excel</button>
+                </div>
+                <div class="table-container">
+                    <table id="shipment-table">
+                        <thead>
+                            <tr>
+                                <th>记录ID</th>
+                                <th>产品名称</th>
+                                <th>数量</th>
+                                <th>客户名称</th>
+                                <th>操作员</th>
+                                <th>发货时间</th>
+                                <th>备注</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shipment-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 配件损耗 -->
+            <div id="defects" class="tab-content">
+                <h2>⚠️ 配件损耗登记</h2>
+                <div id="defects-message" class="message"></div>
+                <form onsubmit="recordDefects(event)">
+                    <div class="form-group">
+                        <label>配件损耗列表 *</label>
+                        <div id="defect-list" class="component-list"></div>
+                        <button type="button" onclick="addDefectRow()">+ 添加配件</button>
+                    </div>
+                    <div class="form-group">
+                        <label>备注（损耗原因）</label>
+                        <textarea id="defect-component-note" rows="2" placeholder="如：破损、过期、质量不合格等"></textarea>
+                    </div>
+                    <button type="submit">提交损耗记录</button>
+                </form>
+            </div>
+            
+            <!-- 交易历史 -->
+            <div id="history" class="tab-content">
+                <h2>📜 交易历史</h2>
+                
+                <!-- 日期筛选器 -->
+                <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="font-weight: bold; color: #667eea;">📅 开始日期：</label>
+                            <input type="date" id="history-start-date" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="font-weight: bold; color: #667eea;">📅 结束日期：</label>
+                            <input type="date" id="history-end-date" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <button onclick="applyDateFilter()" style="padding: 8px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            🔍 应用筛选
+                        </button>
+                        <button onclick="clearDateFilter()" style="padding: 8px 20px; background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);">
+                            🔄 清除筛选
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 类型筛选按钮 -->
+                <div style="margin: 15px 0; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <button onclick="loadHistory('all')">全部</button>
+                        <button onclick="loadHistory('IN')">入库记录</button>
+                        <button onclick="loadHistory('OUT')">配件出库</button>
+                        <button onclick="loadHistory('PRODUCTION')">生产记录</button>
+                        <button onclick="loadHistory('SHIPMENT')">发货记录</button>
+                        <button onclick="loadHistory('DEFECT')">次品记录</button>
+                    </div>
+                    <button onclick="exportHistory()" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                        📥 导出Excel
+                    </button>
+                </div>
+                <table id="history-table">
+                    <thead>
+                        <tr>
+                            <th>记录ID</th>
+                            <th>产品名称</th>
+                            <th>类型</th>
+                            <th>数量</th>
+                            <th>操作员</th>
+                            <th>分配给</th>
+                            <th>次品数</th>
+                            <th>时间</th>
+                            <th>备注</th>
+                            <th>操作</th>
+                        </tr>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <!-- 客户管理 -->
+            <div id="customers" class="tab-content">
+                <h2>👥 客户管理</h2>
+                <button onclick="showAddCustomerForm()" style="margin: 15px 0;">+ 添加客户</button>
+                
+                <div class="form-group" style="max-width: 400px;">
+                    <input type="text" id="customer-search" placeholder="搜索客户名称、联系人或电话..." 
+                           onkeyup="searchCustomers()">
+                </div>
+                
+                <table id="customer-table">
+                    <thead>
+                        <tr>
+                            <th>客户名称</th>
+                            <th>联系人</th>
+                            <th>电话</th>
+                            <th>地址</th>
+                            <th>备注</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customer-list"></tbody>
+                </table>
+            </div>
+            
+            <!-- 用户管理 -->
+            <div id="users" class="tab-content">
+                <h2>👥 用户管理</h2>
+                <button onclick="showAddUserForm()" style="margin: 15px 0;">+ 添加用户</button>
+                
+                <div id="add-user-form" style="display:none; background:#f5f5f5; padding:20px; border-radius:5px; margin-bottom:20px;">
+                    <h3 style="color:#667eea; margin-bottom:15px;">添加新用户</h3>
+                    <div id="add-user-message" class="message"></div>
+                    <form onsubmit="addUser(event)">
+                        <div class="form-group">
+                            <label>用户名 *</label>
+                            <input type="text" id="new-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label>密码 *</label>
+                            <input type="password" id="new-password" required>
+                        </div>
+                        <div class="form-group">
+                            <label>真实姓名 *</label>
+                            <input type="text" id="new-realname" required>
+                        </div>
+                        <div class="form-group">
+                            <label>角色 *</label>
+                            <select id="new-role" required>
+                                <option value="">-- 请选择 --</option>
+                                <option value="ADMIN">系统管理员</option>
+                                <option value="MANAGER">仓库管理员</option>
+                                <option value="WORKER">生产人员</option>
+                            </select>
+                        </div>
+                        <button type="submit">添加</button>
+                        <button type="button" onclick="hideAddUserForm()">取消</button>
+                    </form>
+                </div>
+                
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>用户ID</th>
+                            <th>用户名</th>
+                            <th>真实姓名</th>
+                            <th>角色</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+        </div>
+        <!-- 右侧内容区结束 -->
+    </div>
+    <!-- 主容器结束 -->
+    
+    <!-- 编辑产品弹窗 -->
+    <div id="edit-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+        <div class="modal-content">
+            <h2 style="color: #667eea;">编辑产品</h2>
+            <div id="edit-message" class="message"></div>
+            <form onsubmit="submitEdit(event)">
+                <input type="hidden" id="edit-product-id">
+                <input type="hidden" id="edit-product-type">
+                <div class="form-group">
+                    <label>产品名称 *</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+                <div class="form-group">
+                    <label>单位 *</label>
+                    <input type="text" id="edit-unit" required>
+                </div>
+                <div class="form-group">
+                    <label>库存数量 *</label>
+                    <input type="number" id="edit-quantity" min="0" step="1" required>
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea id="edit-description" rows="2"></textarea>
+                </div>
+                <div id="edit-components-section" style="display:none;">
+                    <label>配件配置</label>
+                    <div id="edit-component-list" class="component-list"></div>
+                    <button type="button" onclick="addEditComponentRow()">+ 添加配件</button>
+                </div>
+                <br><br>
+                <button type="submit">保存</button>
+                <button type="button" onclick="closeEditModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    
+    <script>
+        let allComponents = [];
+        let allWorkers = [];
+        let currentUser = null;
+        let currentHistoryType = 'all';  // 跟踪当前的交易历史筛选类型
+        let currentInventoryType = null;  // 跟踪当前的库存类型筛选
+        let currentInventorySearch = '';  // 跟踪当前的库存搜索关键词
+        let currentInventoryPage = 1;  // 跟踪当前的库存页码
+        
+        // 切换标签页
+        function showTab(tabName) {
+            // 移除所有导航项的active类
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            // 移除所有内容区的active类
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // 激活当前导航项
+            const navItem = document.querySelector(`.nav-item[data-tab="${tabName}"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            // 显示当前内容区
+            document.getElementById(tabName).classList.add('active');
+            
+            if (tabName === 'inventory') {
+                loadInventory();
+            } else if (tabName === 'shipment-records') {
+                loadShipmentHistory();
+            } else if (tabName === 'history') {
+                loadHistory('all');
+            } else if (tabName === 'stock-in') {
+                loadComponentOptions();
+            } else if (tabName === 'stock-out') {
+                loadFinishedProductOptions();
+                // 初始化一个分配行
+                const list = document.getElementById('assignment-list');
+                if (list.children.length === 0) {
+                    addAssignmentRow();
+                }
+            } else if (tabName === 'add-product') {
+                loadAllComponents();
+            } else if (tabName === 'defects') {
+                loadDefectComponentOptions();
+                // 初始化一个损耗行
+                const list = document.getElementById('defect-list');
+                if (list.children.length === 0) {
+                    addDefectRow();
+                }
+            } else if (tabName === 'customers') {
+                loadCustomers();
+            } else if (tabName === 'users') {
+                loadUsers();
+            }
+        }
+        
+        // 显示消息
+        function showMessage(elementId, message, isSuccess) {
+            const msgElement = document.getElementById(elementId);
+            msgElement.textContent = message;
+            msgElement.className = 'message ' + (isSuccess ? 'success' : 'error');
+            msgElement.style.display = 'block';
+            setTimeout(() => {
+                msgElement.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 加载所有配件（用于添加成品时选择）
+        async function loadAllComponents() {
+            try {
+                const response = await fetch('/api/products?type=COMPONENT');
+                const result = await response.json();
+                allComponents = result.data;
+            } catch (error) {
+                console.error('加载配件失败:', error);
+            }
+        }
+        
+        // 切换配件配置区域
+        async function toggleComponents() {
+            const type = document.getElementById('product-type').value;
+            const section = document.getElementById('components-section');
+            if (type === 'FINISHED') {
+                // 确保配件列表已加载
+                if (allComponents.length === 0) {
+                    await loadAllComponents();
+                }
+                section.style.display = 'block';
+                if (document.getElementById('component-list').children.length === 0) {
+                    addComponentRow();
+                }
+            } else {
+                section.style.display = 'none';
+            }
+        }
+        
+        // 添加配件行
+        async function addComponentRow() {
+            // 确保配件列表已加载
+            if (allComponents.length === 0) {
+                await loadAllComponents();
+            }
+            
+            const list = document.getElementById('component-list');
+            const div = document.createElement('div');
+            div.className = 'component-item';
+            
+            let options = '<option value="">-- 选择配件 --</option>';
+            allComponents.forEach(comp => {
+                options += `<option value="${comp.product_id}">${comp.name} (库存: ${comp.quantity})</option>`;
+            });
+            
+            div.innerHTML = `
+                <select class="comp-select" required>${options}</select>
+                <input type="number" class="comp-qty" placeholder="数量" min="1" required>
+                <button type="button" onclick="this.parentElement.remove()">删除</button>
+            `;
+            list.appendChild(div);
+        }
+        
+        // 加载库存
+        async function loadInventory(type = null, page = 1) {
+            try {
+                // 如果指定了类型，更新当前类型并重置页码
+                if (type !== undefined) {
+                    currentInventoryType = type;
+                    currentInventoryPage = 1;
+                } else {
+                    currentInventoryPage = page;
+                }
+                
+                // 构建URL参数
+                const params = new URLSearchParams();
+                if (currentInventoryType) {
+                    params.append('type', currentInventoryType);
+                }
+                if (currentInventorySearch) {
+                    params.append('search', currentInventorySearch);
+                }
+                params.append('page', currentInventoryPage);
+                params.append('per_page', 20);
+                
+                const url = `/api/products?${params.toString()}`;
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                const tbody = document.querySelector('#inventory-table tbody');
+                tbody.innerHTML = '';
+                
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">暂无产品</td></tr>';
+                    document.getElementById('inventory-pagination').innerHTML = '';
+                    return;
+                }
+                
+                result.data.forEach(product => {
+                    const typeClass = product.product_type === 'COMPONENT' ? 'component' : 'finished';
+                    const typeText = product.product_type === 'COMPONENT' ? '配件' : '成品';
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${product.product_id}</td>
+                        <td>${product.name}</td>
+                        <td><span class="badge ${typeClass}">${typeText}</span></td>
+                        <td><strong>${product.quantity}</strong></td>
+                        <td>${product.unit}</td>
+                        <td>${product.description || '-'}</td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editProduct(${product.product_id})">编辑</button>
+                            <button class="action-btn delete-btn" onclick="deleteProduct(${product.product_id})">删除</button>
+                        </td>
+                    `;
+                });
+                
+                // 渲染分页控件
+                renderInventoryPagination(result.pagination);
+            } catch (error) {
+                console.error('加载库存失败:', error);
+            }
+        }
+        
+        // 渲染库存分页控件
+        function renderInventoryPagination(pagination) {
+            const container = document.getElementById('inventory-pagination');
+            if (pagination.total_pages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = `<div style="display: inline-block;">`;
+            html += `<span style="margin-right: 15px;">共 ${pagination.total} 条记录，第 ${pagination.page} / ${pagination.total_pages} 页</span>`;
+            
+            // 首页
+            if (pagination.page > 1) {
+                html += `<button onclick="loadInventory(undefined, 1)">首页</button>`;
+                html += `<button onclick="loadInventory(undefined, ${pagination.page - 1})">上一页</button>`;
+            }
+            
+            // 页码
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.total_pages, pagination.page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === pagination.page) {
+                    html += `<button style="background: #667eea; color: white;">${i}</button>`;
+                } else {
+                    html += `<button onclick="loadInventory(undefined, ${i})">${i}</button>`;
+                }
+            }
+            
+            // 末页
+            if (pagination.page < pagination.total_pages) {
+                html += `<button onclick="loadInventory(undefined, ${pagination.page + 1})">下一页</button>`;
+                html += `<button onclick="loadInventory(undefined, ${pagination.total_pages})">末页</button>`;
+            }
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+        
+        // 搜索库存
+        function searchInventory() {
+            currentInventorySearch = document.getElementById('inventory-search').value.trim();
+            loadInventory(undefined, 1);
+        }
+        
+        // 清除搜索
+        function clearInventorySearch() {
+            document.getElementById('inventory-search').value = '';
+            currentInventorySearch = '';
+            loadInventory(undefined, 1);
+        }
+        
+        // 支持回车键搜索
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('inventory-search');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        searchInventory();
+                    }
+                });
+            }
+        });
+        
+        // 添加产品
+        async function addProduct(event) {
+            event.preventDefault();
+            
+            const type = document.getElementById('product-type').value;
+            const data = {
+                name: document.getElementById('product-name').value,
+                product_type: type,
+                unit: document.getElementById('product-unit').value,
+                description: document.getElementById('product-description').value,
+                components: []
+            };
+            
+            if (type === 'FINISHED') {
+                const compSelects = document.querySelectorAll('.comp-select');
+                const compQtys = document.querySelectorAll('.comp-qty');
+                
+                for (let i = 0; i < compSelects.length; i++) {
+                    if (compSelects[i].value && compQtys[i].value) {
+                        data.components.push({
+                            component_id: parseInt(compSelects[i].value),
+                            quantity: parseInt(compQtys[i].value)
+                        });
+                    }
+                }
+                
+                if (data.components.length === 0) {
+                    showMessage('add-product-message', '成品必须至少配置一个配件', false);
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showMessage('add-product-message', result.message, result.success);
+                
+                if (result.success) {
+                    event.target.reset();
+                    document.getElementById('components-section').style.display = 'none';
+                    document.getElementById('component-list').innerHTML = '';
+                }
+            } catch (error) {
+                showMessage('add-product-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 加载配件选项（用于损耗登记）
+        async function loadDefectComponentOptions() {
+            try {
+                const response = await fetch('/api/products?type=COMPONENT');
+                const result = await response.json();
+                
+                if (result.success && result.data && Array.isArray(result.data)) {
+                    allComponents = result.data;
+                } else {
+                    console.error('配件数据格式错误:', result);
+                    allComponents = [];
+                }
+            } catch (error) {
+                console.error('加载配件选项失败:', error);
+                allComponents = [];
+            }
+        }
+        
+        // 添加配件损耗行
+        let defectRowCounter = 0;
+        function addDefectRow() {
+            const list = document.getElementById('defect-list');
+            const div = document.createElement('div');
+            div.className = 'component-item';
+            
+            const rowId = `defect-row-${defectRowCounter++}`;
+            const inputId = `defect-input-${rowId}`;
+            const listId = `defect-list-${rowId}`;
+            
+            div.innerHTML = `
+                <div class="autocomplete-container" style="flex: 2;">
+                    <input type="text" id="${inputId}" class="autocomplete-input defect-comp-select" 
+                           placeholder="输入配件名称搜索..." required autocomplete="off">
+                    <div id="${listId}" class="autocomplete-list"></div>
+                </div>
+                <input type="number" class="defect-comp-qty" placeholder="损耗数量" min="1" required style="flex: 1;">
+                <button type="button" onclick="this.parentElement.remove()">删除</button>
+            `;
+            list.appendChild(div);
+            
+            // 为新添加的输入框设置自动完成
+            setupAutocomplete(inputId, listId, allComponents);
+        }
+        
+        // 记录配件损耗
+        async function recordDefects(event) {
+            event.preventDefault();
+            
+            // 收集所有配件损耗
+            const defectSelects = document.querySelectorAll('.defect-comp-select');
+            const defectQtys = document.querySelectorAll('.defect-comp-qty');
+            
+            const defects = [];
+            for (let i = 0; i < defectSelects.length; i++) {
+                const componentName = defectSelects[i].value.trim();
+                if (componentName && defectQtys[i].value) {
+                    defects.push({
+                        component_name: componentName,
+                        quantity: parseInt(defectQtys[i].value)
+                    });
+                }
+            }
+            
+            if (defects.length === 0) {
+                showMessage('defects-message', '请至少添加一个配件损耗', false);
+                return;
+            }
+            
+            const data = {
+                defects: defects,
+                note: document.getElementById('defect-component-note').value
+            };
+            
+            try {
+                const response = await fetch('/api/defects', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showMessage('defects-message', result.message, result.success);
+                
+                if (result.success) {
+                    event.target.reset();
+                    document.getElementById('defect-list').innerHTML = '';
+                    addDefectRow();
+                    loadDefectComponentOptions();
+                    loadInventory();
+                }
+            } catch (error) {
+                showMessage('defects-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 成品发货相关函数
+        let finishedProducts = [];
+        
+        // 添加发货行
+        function addShipmentRow() {
+            const list = document.getElementById('shipment-list');
+            const row = document.createElement('div');
+            row.className = 'component-row';
+            row.innerHTML = `
+                <input type="text" class="shipment-product-select" list="finished-products-list" placeholder="选择成品" required>
+                <input type="number" class="shipment-product-qty" min="1" placeholder="数量" required>
+                <button type="button" onclick="this.parentElement.remove()">删除</button>
+            `;
+            list.appendChild(row);
+        }
+        
+        // 加载成品列表
+        async function loadFinishedProducts() {
+            try {
+                const response = await fetch('/api/products?type=FINISHED');
+                const result = await response.json();
+                
+                if (result.success && result.data && Array.isArray(result.data)) {
+                    finishedProducts = result.data;
+                    
+                    // 创建datalist
+                    let datalist = document.getElementById('finished-products-list');
+                    if (!datalist) {
+                        datalist = document.createElement('datalist');
+                        datalist.id = 'finished-products-list';
+                        document.body.appendChild(datalist);
+                    }
+                    
+                    datalist.innerHTML = finishedProducts.map(p => 
+                        `<option value="${p.name}">库存: ${p.quantity}</option>`
+                    ).join('');
+                } else {
+                    console.error('成品数据格式错误:', result);
+                    finishedProducts = [];
+                }
+            } catch (error) {
+                console.error('加载成品列表失败:', error);
+                finishedProducts = [];
+            }
+        }
+        
+        // 创建发货
+        async function createShipment(event) {
+            event.preventDefault();
+            
+            // 收集所有发货产品
+            const productSelects = document.querySelectorAll('.shipment-product-select');
+            const productQtys = document.querySelectorAll('.shipment-product-qty');
+            
+            const shipments = [];
+            for (let i = 0; i < productSelects.length; i++) {
+                const productName = productSelects[i].value.trim();
+                if (productName && productQtys[i].value) {
+                    shipments.push({
+                        product_name: productName,
+                        quantity: parseInt(productQtys[i].value)
+                    });
+                }
+            }
+            
+            if (shipments.length === 0) {
+                showMessage('shipment-message', '请至少添加一个成品', false);
+                return;
+            }
+            
+            const customerName = document.getElementById('shipment-customer').value;
+            const note = document.getElementById('shipment-note').value;
+            
+            // 显示确认预览
+            showShipmentConfirmation(shipments, customerName, note, event.target);
+        }
+        
+        // 显示发货确认预览
+        function showShipmentConfirmation(shipments, customerName, note, form) {
+            // 计算总数量
+            const totalQty = shipments.reduce((sum, item) => sum + item.quantity, 0);
+            
+            // 构建产品列表HTML
+            let productListHtml = '';
+            shipments.forEach((item, index) => {
+                productListHtml += `
+                    <tr>
+                        <td style="text-align: center;">${index + 1}</td>
+                        <td>${item.product_name}</td>
+                        <td style="text-align: center;">${item.quantity}</td>
+                    </tr>
+                `;
+            });
+            
+            // 创建确认对话框
+            const confirmHtml = `
+                <div id="shipment-confirm-modal" style="display: block; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; padding: 30px; width: 90%; max-width: 600px; max-height: 85vh; overflow-y: auto; border-radius: 10px; position: relative; z-index: 10001;">
+                        <h3 style="color: #667eea; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 24px;">⚠️</span>
+                            <span>发货确认</span>
+                        </h3>
+                        
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #495057;">客户名称：</strong>
+                                <span style="color: #667eea; font-size: 16px; font-weight: bold;">${customerName}</span>
+                            </div>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <strong style="color: #495057;">发货产品：</strong>
+                            </div>
+                            
+                            <table style="width: 100%; margin-bottom: 15px; background: white; border-radius: 5px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background: #667eea;">
+                                        <th style="padding: 10px; color: white; text-align: center; width: 60px;">序号</th>
+                                        <th style="padding: 10px; color: white;">产品名称</th>
+                                        <th style="padding: 10px; color: white; text-align: center; width: 100px;">数量</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${productListHtml}
+                                </tbody>
+                                <tfoot>
+                                    <tr style="background: #e9ecef; font-weight: bold;">
+                                        <td colspan="2" style="padding: 10px; text-align: right;">合计：</td>
+                                        <td style="padding: 10px; text-align: center; color: #667eea; font-size: 16px;">${totalQty}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                            
+                            ${note ? `
+                                <div>
+                                    <strong style="color: #495057;">备注：</strong>
+                                    <div style="background: white; padding: 10px; border-radius: 5px; margin-top: 5px; color: #6c757d;">
+                                        ${note}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                            <strong style="color: #856404;">⚠️ 请仔细核对以上信息</strong>
+                            <p style="margin: 10px 0 0 0; color: #856404; font-size: 14px;">
+                                确认后将扣减库存并生成发货记录，此操作不可撤销！
+                            </p>
+                        </div>
+                        
+                        <div style="text-align: right; margin-top: 20px;">
+                            <button type="button" id="cancel-shipment-btn" onclick="console.log('取消点击'); closeShipmentConfirmation();"
+                                    style="background: #6c757d; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-right: 10px;">
+                                取消
+                            </button>
+                            <button type="button" id="confirm-shipment-btn" onclick="console.log('确认点击'); confirmShipment();"
+                                    style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                                确认发货
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // 添加到页面
+            document.body.insertAdjacentHTML('beforeend', confirmHtml);
+            
+            // 保存数据到全局变量供确认使用
+            window.pendingShipmentData = {
+                shipments: shipments,
+                customer_name: customerName,
+                note: note,
+                form: form
+            };
+            
+            console.log('发货确认对话框已创建，数据已保存:', window.pendingShipmentData);
+        }
+        
+        // 关闭发货确认对话框
+        function closeShipmentConfirmation() {
+            const modal = document.getElementById('shipment-confirm-modal');
+            if (modal) {
+                modal.remove();
+            }
+            window.pendingShipmentData = null;
+        }
+        
+        // 确认发货
+        async function confirmShipment() {
+            console.log('confirmShipment called');
+            console.log('pendingShipmentData:', window.pendingShipmentData);
+            
+            if (!window.pendingShipmentData) {
+                console.error('No pending shipment data');
+                alert('发货数据丢失，请重新提交');
+                return;
+            }
+            
+            const data = {
+                shipments: window.pendingShipmentData.shipments,
+                customer_name: window.pendingShipmentData.customer_name,
+                note: window.pendingShipmentData.note
+            };
+            
+            console.log('Sending shipment data:', data);
+            
+            try {
+                const response = await fetch('/api/shipments', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                console.log('Response status:', response.status);
+                const result = await response.json();
+                console.log('Response result:', result);
+                
+                // 显示结果消息
+                showMessage('shipment-message', result.message, result.success);
+                
+                if (result.success) {
+                    // 保存form引用，因为closeShipmentConfirmation会清空pendingShipmentData
+                    const form = window.pendingShipmentData.form;
+                    
+                    // 关闭确认对话框
+                    closeShipmentConfirmation();
+                    
+                    // 重置表单
+                    if (form) {
+                        form.reset();
+                    }
+                    document.getElementById('shipment-list').innerHTML = '';
+                    addShipmentRow();
+                    loadShipmentHistory();
+                    loadInventory();
+                } else {
+                    // 失败时也关闭对话框
+                    closeShipmentConfirmation();
+                }
+            } catch (error) {
+                console.error('Shipment error:', error);
+                closeShipmentConfirmation();
+                showMessage('shipment-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 加载发货历史
+        async function loadShipmentHistory() {
+            const customerName = document.getElementById('shipment-customer-filter').value;
+            const startDate = document.getElementById('shipment-start-date').value;
+            const endDate = document.getElementById('shipment-end-date').value;
+            
+            let url = '/api/shipments?limit=100';
+            if (customerName) {
+                url += `&customer_name=${encodeURIComponent(customerName)}`;
+            }
+            if (startDate) {
+                url += `&start_date=${startDate}`;
+            }
+            if (endDate) {
+                url += `&end_date=${endDate}`;
+            }
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                const tbody = document.getElementById('shipment-tbody');
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">暂无发货记录</td></tr>';
+                    return;
+                }
+                
+                tbody.innerHTML = result.data.map(s => `
+                    <tr>
+                        <td>${s.trans_id}</td>
+                        <td>${s.product_name}</td>
+                        <td>${s.quantity}</td>
+                        <td>${s.customer_name || '-'}</td>
+                        <td>${s.operator}</td>
+                        <td>${s.trans_date}</td>
+                        <td>${s.note || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('加载发货历史失败:', error);
+            }
+        }
+        
+        // 清除发货记录筛选
+        function clearShipmentFilters() {
+            document.getElementById('shipment-customer-filter').value = '';
+            document.getElementById('shipment-start-date').value = '';
+            document.getElementById('shipment-end-date').value = '';
+            loadShipmentHistory();
+        }
+        
+        // 导出发货记录
+        function exportShipments() {
+            const customerName = document.getElementById('shipment-customer-filter').value;
+            const startDate = document.getElementById('shipment-start-date').value;
+            const endDate = document.getElementById('shipment-end-date').value;
+            
+            let url = '/api/shipments/export?limit=1000';
+            if (customerName) {
+                url += `&customer_name=${encodeURIComponent(customerName)}`;
+            }
+            if (startDate) {
+                url += `&start_date=${startDate}`;
+            }
+            if (endDate) {
+                url += `&end_date=${endDate}`;
+            }
+            window.location.href = url;
+        }
+        
+        async function loadComponentOptions() {
+            try {
+                const response = await fetch('/api/products?type=COMPONENT');
+                const result = await response.json();
+                
+                if (result.success && result.data && Array.isArray(result.data)) {
+                    // 保存配件列表供自动完成使用
+                    allComponents = result.data;
+                    
+                    // 初始化自动完成
+                    setupAutocomplete('in-product-name', 'in-product-list', allComponents);
+                } else {
+                    console.error('配件数据格式错误:', result);
+                    allComponents = [];
+                }
+            } catch (error) {
+                console.error('加载配件选项失败:', error);
+                allComponents = [];
+            }
+        }
+        
+        // 设置自动完成功能
+        function setupAutocomplete(inputId, listId, items) {
+            const input = document.getElementById(inputId);
+            const list = document.getElementById(listId);
+            let selectedIndex = -1;
+            
+            // 定位下拉列表
+            function positionList() {
+                const rect = input.getBoundingClientRect();
+                list.style.position = 'fixed';
+                list.style.top = (rect.bottom + window.scrollY) + 'px';
+                list.style.left = rect.left + 'px';
+                list.style.width = rect.width + 'px';
+            }
+            
+            // 输入事件
+            input.addEventListener('input', function() {
+                const value = this.value.toLowerCase();
+                list.innerHTML = '';
+                selectedIndex = -1;
+                
+                // 清除之前存储的product_id
+                if (this.dataset.productId) {
+                    this.dataset.productId = '';
+                }
+                
+                if (!value) {
+                    list.style.display = 'none';
+                    return;
+                }
+                
+                // 过滤匹配的项
+                const filtered = items.filter(item => 
+                    item.name.toLowerCase().includes(value)
+                );
+                
+                if (filtered.length === 0) {
+                    list.style.display = 'none';
+                    return;
+                }
+                
+                // 显示匹配项（最多显示10个）
+                filtered.slice(0, 10).forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
+                    div.textContent = `${item.name} (库存: ${item.quantity} ${item.unit})`;
+                    div.dataset.value = item.name;
+                    div.dataset.productId = item.product_id;
+                    div.dataset.index = index;
+                    
+                    div.addEventListener('click', function() {
+                        input.value = this.dataset.value;
+                        input.dataset.productId = this.dataset.productId;
+                        list.style.display = 'none';
+                    });
+                    
+                    list.appendChild(div);
+                });
+                
+                positionList();
+                list.style.display = 'block';
+            });
+            
+            // 获得焦点时重新定位
+            input.addEventListener('focus', function() {
+                if (list.style.display === 'block') {
+                    positionList();
+                }
+            });
+            
+            // 滚动时重新定位
+            window.addEventListener('scroll', function() {
+                if (list.style.display === 'block') {
+                    positionList();
+                }
+            }, true);
+            
+            // 键盘导航
+            input.addEventListener('keydown', function(e) {
+                const items = list.querySelectorAll('.autocomplete-item');
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateSelection(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection(items);
+                } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                    e.preventDefault();
+                    items[selectedIndex].click();
+                } else if (e.key === 'Escape') {
+                    list.style.display = 'none';
+                }
+            });
+            
+            function updateSelection(items) {
+                items.forEach((item, index) => {
+                    if (index === selectedIndex) {
+                        item.classList.add('selected');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+            
+            // 点击外部关闭列表
+            document.addEventListener('click', function(e) {
+                if (e.target !== input && e.target.parentElement !== list) {
+                    list.style.display = 'none';
+                }
+            });
+        }
+        
+        // 加载成品选项
+        async function loadFinishedProductOptions() {
+            try {
+                const response = await fetch('/api/products?type=FINISHED');
+                const result = await response.json();
+                
+                console.log('成品选项响应:', result);
+                
+                const select = document.getElementById('out-product-name');
+                if (!select) {
+                    console.error('找不到成品选择框元素');
+                    return;
+                }
+                
+                select.innerHTML = '<option value="">-- 请选择成品 --</option>';
+                
+                if (result.success && result.data && Array.isArray(result.data)) {
+                    result.data.forEach(product => {
+                        const option = document.createElement('option');
+                        option.value = product.name;
+                        option.textContent = product.name;
+                        select.appendChild(option);
+                    });
+                } else {
+                    console.error('成品数据格式错误:', result);
+                }
+            } catch (error) {
+                console.error('加载成品选项失败:', error);
+            }
+        }
+        
+        // 入库
+        async function stockIn(event) {
+            event.preventDefault();
+            
+            const data = {
+                product_name: document.getElementById('in-product-name').value.trim(),
+                quantity: document.getElementById('in-quantity').value,
+                note: document.getElementById('in-note').value
+            };
+            
+            if (!data.product_name) {
+                showMessage('stock-in-message', '请选择配件', false);
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/stock/in', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showMessage('stock-in-message', result.message, result.success);
+                
+                if (result.success) {
+                    event.target.reset();
+                    loadComponentOptions();
+                    loadInventory();
+                }
+            } catch (error) {
+                showMessage('stock-in-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 添加生产人员分配行
+        function addAssignmentRow() {
+            const list = document.getElementById('assignment-list');
+            const div = document.createElement('div');
+            div.className = 'component-item';
+            
+            let options = '<option value="">-- 选择生产人员 --</option>';
+            allWorkers.forEach(worker => {
+                options += `<option value="${worker.real_name}">${worker.real_name}</option>`;
+            });
+            
+            div.innerHTML = `
+                <select class="assign-person" required style="flex: 2;">${options}</select>
+                <input type="number" class="assign-qty" placeholder="数量" min="1" required style="flex: 1;">
+                <button type="button" onclick="this.parentElement.remove()">删除</button>
+            `;
+            list.appendChild(div);
+        }
+        
+        // 出库
+        async function stockOut(event) {
+            event.preventDefault();
+            
+            // 收集所有生产人员分配
+            const assignPersons = document.querySelectorAll('.assign-person');
+            const assignQtys = document.querySelectorAll('.assign-qty');
+            
+            const assignments = [];
+            for (let i = 0; i < assignPersons.length; i++) {
+                if (assignPersons[i].value.trim() && assignQtys[i].value) {
+                    assignments.push({
+                        assigned_to: assignPersons[i].value.trim(),
+                        quantity: parseInt(assignQtys[i].value)
+                    });
+                }
+            }
+            
+            if (assignments.length === 0) {
+                showMessage('stock-out-message', '请至少添加一个生产人员分配', false);
+                return;
+            }
+            
+            const data = {
+                product_name: document.getElementById('out-product-name').value,
+                assignments: assignments,
+                note: document.getElementById('out-note').value
+            };
+            
+            try {
+                const response = await fetch('/api/stock/out', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showMessage('stock-out-message', result.message, result.success);
+                
+                if (result.success) {
+                    event.target.reset();
+                    document.getElementById('assignment-list').innerHTML = '';
+                    addAssignmentRow();
+                    loadFinishedProductOptions();
+                    loadInventory();
+                }
+            } catch (error) {
+                showMessage('stock-out-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 打开生产完成弹窗
+        function openProductionModal(transIds) {
+            if (!transIds || transIds.length === 0) return;
+            
+            lastTransIds = transIds;
+            currentProductionIndex = 0;
+            openNextProduction();
+        }
+        
+        // 打开下一个生产任务
+        function openNextProduction() {
+            if (currentProductionIndex >= lastTransIds.length) {
+                // 所有生产任务已完成
+                alert('所有生产任务已完成！');
+                loadInventory();
+                return;
+            }
+            
+            const transId = lastTransIds[currentProductionIndex];
+            document.getElementById('defect-trans-id').value = transId;
+            document.getElementById('defect-modal').style.display = 'block';
+        }
+        
+        // 关闭生产完成弹窗
+        function closeDefectModal() {
+            document.getElementById('defect-modal').style.display = 'none';
+            document.querySelector('#defect-modal form').reset();
+        }
+        
+        // 提交生产完成
+        async function submitProduction(event) {
+            event.preventDefault();
+            
+            const data = {
+                trans_id: parseInt(document.getElementById('defect-trans-id').value),
+                operator: document.getElementById('defect-operator').value
+            };
+            
+            try {
+                const response = await fetch('/api/production/complete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showMessage('defect-message', result.message, result.success);
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        closeDefectModal();
+                        currentProductionIndex++;
+                        
+                        // 继续下一个生产任务
+                        if (currentProductionIndex < lastTransIds.length) {
+                            setTimeout(() => {
+                                openNextProduction();
+                            }, 500);
+                        } else {
+                            loadInventory();
+                        }
+                    }, 1500);
+                }
+            } catch (error) {
+                showMessage('defect-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 加载交易历史
+        async function loadHistory(type) {
+            currentHistoryType = type;  // 保存当前筛选类型
+            try {
+                // 构建URL，包含日期参数
+                let url = type === 'all' ? '/api/transactions?' : `/api/transactions?type=${type}&`;
+                
+                // 添加日期参数
+                const startDate = document.getElementById('history-start-date').value;
+                const endDate = document.getElementById('history-end-date').value;
+                
+                if (startDate) {
+                    url += `start_date=${startDate}&`;
+                }
+                if (endDate) {
+                    url += `end_date=${endDate}&`;
+                }
+                
+                // 移除末尾的 & 或 ?
+                url = url.replace(/[&?]$/, '');
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                const tbody = document.querySelector('#history-table tbody');
+                tbody.innerHTML = '';
+                
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center">暂无记录</td></tr>';
+                    return;
+                }
+                
+                result.data.forEach(trans => {
+                    let typeClass, typeText;
+                    if (trans.trans_type === 'IN') {
+                        typeClass = 'in';
+                        typeText = '入库';
+                    } else if (trans.trans_type === 'OUT') {
+                        typeClass = 'out';
+                        typeText = '配件出库';
+                    } else if (trans.trans_type === 'PRODUCTION') {
+                        typeClass = 'production';
+                        typeText = '生产';
+                    } else if (trans.trans_type === 'SHIPMENT') {
+                        typeClass = 'shipment';
+                        typeText = '发货';
+                    } else if (trans.trans_type === 'CANCEL') {
+                        typeClass = 'defect';
+                        typeText = '已取消';
+                    } else {
+                        typeClass = 'defect';
+                        typeText = '次品';
+                    }
+                    
+                    // 只有管理员可以看到取消按钮，且不能取消已取消的记录
+                    let actionButton = '';
+                    if (currentUser && (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') && trans.trans_type !== 'CANCEL') {
+                        actionButton = `<button onclick="cancelTransaction(${trans.trans_id})" class="btn-danger" style="padding: 5px 10px; font-size: 12px;">取消</button>`;
+                    } else if (trans.trans_type === 'CANCEL') {
+                        actionButton = '<span style="color: #999;">-</span>';
+                    } else {
+                        actionButton = '<span style="color: #999;">无权限</span>';
+                    }
+                    
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${trans.trans_id}</td>
+                        <td>${trans.product_name}</td>
+                        <td><span class="badge ${typeClass}">${typeText}</span></td>
+                        <td>${trans.quantity}</td>
+                        <td>${trans.operator}</td>
+                        <td>${trans.assigned_to || '-'}</td>
+                        <td>${trans.defect_quantity || '-'}</td>
+                        <td>${trans.trans_date}</td>
+                        <td>${trans.note || '-'}</td>
+                        <td>${actionButton}</td>
+                    `;
+                });
+            } catch (error) {
+                console.error('加载历史失败:', error);
+            }
+        }
+        
+        // 应用日期筛选
+        function applyDateFilter() {
+            loadHistory(currentHistoryType);
+        }
+        
+        // 清除日期筛选
+        function clearDateFilter() {
+            document.getElementById('history-start-date').value = '';
+            document.getElementById('history-end-date').value = '';
+            loadHistory(currentHistoryType);
+        }
+        
+        // 取消交易记录
+        async function cancelTransaction(transId) {
+            if (!confirm('确定要取消这条交易记录吗？\n\n取消后将自动恢复库存，此操作不可撤销！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/transactions/${transId}/cancel`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✓ ' + result.message);
+                    // 重新加载交易历史和库存
+                    loadHistory(currentHistoryType);
+                    loadInventory();
+                } else {
+                    alert('✗ ' + result.message);
+                }
+            } catch (error) {
+                alert('操作失败: ' + error.message);
+            }
+        }
+        
+        // 导出交易历史到Excel
+        function exportHistory() {
+            // 构建URL，包含日期参数
+            let url = currentHistoryType === 'all' 
+                ? '/api/transactions/export?' 
+                : `/api/transactions/export?type=${currentHistoryType}&`;
+            
+            // 添加日期参数
+            const startDate = document.getElementById('history-start-date').value;
+            const endDate = document.getElementById('history-end-date').value;
+            
+            if (startDate) {
+                url += `start_date=${startDate}&`;
+            }
+            if (endDate) {
+                url += `end_date=${endDate}&`;
+            }
+            
+            // 移除末尾的 & 或 ?
+            url = url.replace(/[&?]$/, '');
+            
+            // 创建一个隐藏的a标签来触发下载
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        // 页面加载时初始化
+        window.onload = function() {
+            loadCurrentUser();
+            loadCustomerOptions(); // 加载客户下拉选项
+        };
+        
+        // 加载当前登录用户
+        async function loadCurrentUser() {
+            try {
+                const response = await fetch('/api/current-user');
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentUser = result.user;
+                    document.getElementById('current-user').textContent = 
+                        `${currentUser.real_name} (${getRoleName(currentUser.role)})`;
+                    
+                    // 如果是管理员，显示客户管理和用户管理菜单
+                    if (currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER') {
+                        document.getElementById('admin-section').style.display = 'block';
+                        document.getElementById('customer-mgmt-nav').style.display = 'flex';
+                        document.getElementById('user-mgmt-nav').style.display = 'flex';
+                    }
+                    
+                    // 加载初始数据
+                    loadInventory();
+                    loadAllComponents();
+                    loadWorkers();
+                    loadFinishedProducts();
+                    addShipmentRow(); // 初始化一个发货行
+                } else if (result.redirect) {
+                    window.location.href = result.redirect;
+                }
+            } catch (error) {
+                console.error('加载用户信息失败:', error);
+                window.location.href = '/login';
+            }
+        }
+        
+        // 获取角色名称
+        function getRoleName(role) {
+            const roleNames = {
+                'ADMIN': '系统管理员',
+                'MANAGER': '仓库管理员',
+                'WORKER': '生产人员'
+            };
+            return roleNames[role] || role;
+        }
+        
+        // 退出登录
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('退出登录失败:', error);
+            }
+        }
+        
+        // 加载生产人员列表
+        async function loadWorkers() {
+            try {
+                const response = await fetch('/api/users?role=WORKER');
+                const result = await response.json();
+                if (result.success) {
+                    allWorkers = result.data;
+                }
+            } catch (error) {
+                console.error('加载生产人员失败:', error);
+            }
+        }
+        
+        // 编辑产品
+        async function editProduct(productId) {
+            try {
+                // 加载产品信息
+                const response = await fetch(`/api/products/${productId}`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    alert(result.message);
+                    return;
+                }
+                
+                const product = result.data;
+                
+                // 填充表单
+                document.getElementById('edit-product-id').value = product.product_id;
+                document.getElementById('edit-product-type').value = product.product_type;
+                document.getElementById('edit-name').value = product.name;
+                document.getElementById('edit-unit').value = product.unit;
+                document.getElementById('edit-quantity').value = product.quantity || 0;
+                document.getElementById('edit-description').value = product.description || '';
+                
+                // 如果是成品，加载配件配置
+                if (product.product_type === 'FINISHED') {
+                    document.getElementById('edit-components-section').style.display = 'block';
+                    
+                    // 加载现有配件配置
+                    const compResponse = await fetch(`/api/products/${productId}/components`);
+                    const compResult = await compResponse.json();
+                    
+                    const list = document.getElementById('edit-component-list');
+                    list.innerHTML = '';
+                    
+                    if (compResult.data.length > 0) {
+                        compResult.data.forEach(comp => {
+                            addEditComponentRow(comp.component_id, comp.required_quantity);
+                        });
+                    } else {
+                        addEditComponentRow();
+                    }
+                } else {
+                    document.getElementById('edit-components-section').style.display = 'none';
+                }
+                
+                // 显示弹窗
+                document.getElementById('edit-modal').style.display = 'block';
+            } catch (error) {
+                alert('加载产品信息失败: ' + error.message);
+            }
+        }
+        
+        // 添加编辑配件行
+        async function addEditComponentRow(selectedId = null, quantity = 1) {
+            if (allComponents.length === 0) {
+                await loadAllComponents();
+            }
+            
+            const list = document.getElementById('edit-component-list');
+            const div = document.createElement('div');
+            div.className = 'component-item';
+            
+            // 生成唯一ID
+            const uniqueId = 'edit-comp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            const inputId = uniqueId + '-input';
+            const listId = uniqueId + '-list';
+            
+            // 找到选中的配件
+            let selectedComp = null;
+            if (selectedId) {
+                selectedComp = allComponents.find(c => c.product_id === selectedId);
+            }
+            
+            div.innerHTML = `
+                <div class="autocomplete-container" style="flex: 2;">
+                    <input type="text" id="${inputId}" class="autocomplete-input edit-comp-select" 
+                           placeholder="输入配件名称搜索..." required autocomplete="off"
+                           value="${selectedComp ? selectedComp.name : ''}"
+                           data-product-id="${selectedId || ''}">
+                    <div id="${listId}" class="autocomplete-list"></div>
+                </div>
+                <input type="number" class="edit-comp-qty" placeholder="数量" min="1" value="${quantity}" required style="flex: 1;">
+                <button type="button" onclick="this.parentElement.remove()" style="flex: 0;">删除</button>
+            `;
+            list.appendChild(div);
+            
+            // 为新添加的输入框设置自动完成
+            setupAutocomplete(inputId, listId, allComponents);
+        }
+        
+        // 关闭编辑弹窗
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+            document.querySelector('#edit-modal form').reset();
+            document.getElementById('edit-component-list').innerHTML = '';
+        }
+        
+        // 提交编辑
+        async function submitEdit(event) {
+            event.preventDefault();
+            
+            const productId = document.getElementById('edit-product-id').value;
+            const productType = document.getElementById('edit-product-type').value;
+            
+            const data = {
+                name: document.getElementById('edit-name').value,
+                unit: document.getElementById('edit-unit').value,
+                quantity: parseInt(document.getElementById('edit-quantity').value),
+                description: document.getElementById('edit-description').value,
+                components: []
+            };
+            
+            if (productType === 'FINISHED') {
+                const compSelects = document.querySelectorAll('.edit-comp-select');
+                const compQtys = document.querySelectorAll('.edit-comp-qty');
+                
+                for (let i = 0; i < compSelects.length; i++) {
+                    const productId = compSelects[i].dataset.productId;
+                    const qty = compQtys[i].value;
+                    
+                    if (productId && qty) {
+                        data.components.push({
+                            component_id: parseInt(productId),
+                            quantity: parseInt(qty)
+                        });
+                    }
+                }
+                
+                if (data.components.length === 0) {
+                    showMessage('edit-message', '成品必须至少配置一个配件', false);
+                    return;
+                }
+            }
+            
+            try {
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('edit-message', result.message, true);
+                    setTimeout(() => {
+                        closeEditModal();
+                        loadInventory();
+                    }, 1000);
+                } else {
+                    showMessage('edit-message', result.message, false);
+                }
+            } catch (error) {
+                showMessage('edit-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        // 删除产品
+        async function deleteProduct(productId) {
+            if (!confirm('确定要删除这个产品吗？此操作不可恢复！')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                alert(result.message);
+                
+                if (result.success) {
+                    loadInventory();
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        // 用户管理相关函数
+        function showAddUserForm() {
+            document.getElementById('add-user-form').style.display = 'block';
+        }
+        
+        function hideAddUserForm() {
+            document.getElementById('add-user-form').style.display = 'none';
+            document.querySelector('#add-user-form form').reset();
+        }
+        
+        // ==================== 客户管理相关函数 ====================
+        let allCustomers = [];
+        
+        async function loadCustomers() {
+            try {
+                const response = await fetch('/api/customers');
+                const result = await response.json();
+                
+                if (result.success) {
+                    allCustomers = result.data;
+                    displayCustomers(allCustomers);
+                } else {
+                    showMessage('customer-message', result.message, false);
+                }
+            } catch (error) {
+                showMessage('customer-message', '加载客户列表失败: ' + error.message, false);
+            }
+        }
+        
+        function displayCustomers(customers) {
+            const tbody = document.getElementById('customer-list');
+            tbody.innerHTML = '';
+            
+            if (customers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">暂无客户</td></tr>';
+                return;
+            }
+            
+            customers.forEach(customer => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${customer.name}</td>
+                    <td>${customer.contact_person || '-'}</td>
+                    <td>${customer.phone || '-'}</td>
+                    <td>${customer.address || '-'}</td>
+                    <td>${customer.note || '-'}</td>
+                    <td>${customer.created_at}</td>
+                    <td>
+                        <button class="action-btn edit-btn" onclick="editCustomer(${customer.customer_id})">编辑</button>
+                        <button class="action-btn delete-btn" onclick="deleteCustomer(${customer.customer_id})">删除</button>
+                    </td>
+                `;
+            });
+        }
+        
+        function searchCustomers() {
+            const searchTerm = document.getElementById('customer-search').value.toLowerCase();
+            const filtered = allCustomers.filter(c => 
+                c.name.toLowerCase().includes(searchTerm) ||
+                (c.contact_person && c.contact_person.toLowerCase().includes(searchTerm)) ||
+                (c.phone && c.phone.includes(searchTerm))
+            );
+            displayCustomers(filtered);
+        }
+        
+        function showAddCustomerForm() {
+            const formHtml = `
+                <div class="modal" id="customer-modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeCustomerModal()">&times;</span>
+                        <h3>添加客户</h3>
+                        <form onsubmit="saveCustomer(event)">
+                            <input type="hidden" id="customer-id" value="">
+                            <div class="form-group">
+                                <label>客户名称 *</label>
+                                <input type="text" id="customer-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>联系人</label>
+                                <input type="text" id="customer-contact">
+                            </div>
+                            <div class="form-group">
+                                <label>电话</label>
+                                <input type="text" id="customer-phone">
+                            </div>
+                            <div class="form-group">
+                                <label>地址</label>
+                                <input type="text" id="customer-address">
+                            </div>
+                            <div class="form-group">
+                                <label>备注</label>
+                                <textarea id="customer-note" rows="3"></textarea>
+                            </div>
+                            <div id="customer-form-message"></div>
+                            <button type="submit">保存</button>
+                            <button type="button" onclick="closeCustomerModal()">取消</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', formHtml);
+        }
+        
+        async function editCustomer(customerId) {
+            try {
+                const response = await fetch(`/api/customers/${customerId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const customer = result.data;
+                    showAddCustomerForm();
+                    document.querySelector('#customer-modal h3').textContent = '编辑客户';
+                    document.getElementById('customer-id').value = customer.customer_id;
+                    document.getElementById('customer-name').value = customer.name;
+                    document.getElementById('customer-contact').value = customer.contact_person || '';
+                    document.getElementById('customer-phone').value = customer.phone || '';
+                    document.getElementById('customer-address').value = customer.address || '';
+                    document.getElementById('customer-note').value = customer.note || '';
+                }
+            } catch (error) {
+                alert('加载客户信息失败: ' + error.message);
+            }
+        }
+        
+        async function saveCustomer(event) {
+            event.preventDefault();
+            
+            const customerId = document.getElementById('customer-id').value;
+            const data = {
+                name: document.getElementById('customer-name').value,
+                contact_person: document.getElementById('customer-contact').value,
+                phone: document.getElementById('customer-phone').value,
+                address: document.getElementById('customer-address').value,
+                note: document.getElementById('customer-note').value
+            };
+            
+            try {
+                const url = customerId ? `/api/customers/${customerId}` : '/api/customers';
+                const method = customerId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(result.message);
+                    closeCustomerModal();
+                    loadCustomers();
+                    loadCustomerOptions(); // 刷新下拉列表
+                } else {
+                    document.getElementById('customer-form-message').innerHTML = 
+                        `<div class="error-message">${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('customer-form-message').innerHTML = 
+                    `<div class="error-message">操作失败: ${error.message}</div>`;
+            }
+        }
+        
+        async function deleteCustomer(customerId) {
+            if (!confirm('确定要删除这个客户吗？')) return;
+            
+            try {
+                const response = await fetch(`/api/customers/${customerId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                alert(result.message);
+                
+                if (result.success) {
+                    loadCustomers();
+                    loadCustomerOptions(); // 刷新下拉列表
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        function closeCustomerModal() {
+            const modal = document.getElementById('customer-modal');
+            if (modal) modal.remove();
+        }
+        
+        // 加载客户下拉选项（用于发货等功能）
+        async function loadCustomerOptions() {
+            try {
+                const response = await fetch('/api/customers');
+                const result = await response.json();
+                
+                if (result.success && result.data && Array.isArray(result.data)) {
+                    // 更新发货表单的客户选择
+                    const shipmentSelect = document.getElementById('shipment-customer');
+                    if (shipmentSelect) {
+                        const currentValue = shipmentSelect.value;
+                        shipmentSelect.innerHTML = '<option value="">请选择客户</option>';
+                        result.data.forEach(customer => {
+                            const option = document.createElement('option');
+                            option.value = customer.name;
+                            option.textContent = customer.name;
+                            shipmentSelect.appendChild(option);
+                        });
+                        if (currentValue) shipmentSelect.value = currentValue;
+                    }
+                    
+                    // 更新发货记录筛选的客户选择
+                    const filterSelect = document.getElementById('shipment-customer-filter');
+                    if (filterSelect) {
+                        const currentFilterValue = filterSelect.value;
+                        filterSelect.innerHTML = '<option value="">全部客户</option>';
+                        result.data.forEach(customer => {
+                            const option = document.createElement('option');
+                            option.value = customer.name;
+                            option.textContent = customer.name;
+                            filterSelect.appendChild(option);
+                        });
+                        if (currentFilterValue) filterSelect.value = currentFilterValue;
+                    }
+                } else {
+                    console.error('客户数据格式错误:', result);
+                }
+            } catch (error) {
+                console.error('加载客户选项失败:', error);
+            }
+        }
+        
+        // ==================== 用户管理相关函数 ====================
+        
+        async function loadUsers() {
+            console.log('开始加载用户列表...');
+            try {
+                const response = await fetch('/api/users');
+                console.log('API响应:', response.status);
+                const result = await response.json();
+                console.log('用户数据:', result);
+                
+                const tbody = document.querySelector('#users-table tbody');
+                tbody.innerHTML = '';
+                
+                if (!result.success) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">${result.message}</td></tr>`;
+                    return;
+                }
+                
+                if (result.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center">暂无用户</td></tr>';
+                    return;
+                }
+                
+                result.data.forEach(user => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td>${user.user_id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.real_name}</td>
+                        <td>${getRoleName(user.role)}</td>
+                        <td>${user.created_at}</td>
+                        <td>
+                            ${user.username !== 'admin' ? 
+                                `<button class="action-btn delete-btn" onclick="deleteUser(${user.user_id})">删除</button>` : 
+                                '-'}
+                        </td>
+                    `;
+                });
+                console.log('用户列表加载完成');
+            } catch (error) {
+                console.error('加载用户列表失败:', error);
+                const tbody = document.querySelector('#users-table tbody');
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">加载失败: ${error.message}</td></tr>`;
+            }
+        }
+        
+        async function addUser(event) {
+            event.preventDefault();
+            
+            const data = {
+                username: document.getElementById('new-username').value,
+                password: document.getElementById('new-password').value,
+                real_name: document.getElementById('new-realname').value,
+                role: document.getElementById('new-role').value
+            };
+            
+            try {
+                const response = await fetch('/api/users', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                showMessage('add-user-message', result.message, result.success);
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        hideAddUserForm();
+                        loadUsers();
+                        loadWorkers();
+                    }, 1000);
+                }
+            } catch (error) {
+                showMessage('add-user-message', '操作失败: ' + error.message, false);
+            }
+        }
+        
+        async function deleteUser(userId) {
+            if (!confirm('确定要删除这个用户吗？')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                alert(result.message);
+                
+                if (result.success) {
+                    loadUsers();
+                    loadWorkers();
+                }
+            } catch (error) {
+                alert('删除失败: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
