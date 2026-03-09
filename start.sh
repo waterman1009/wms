@@ -187,17 +187,37 @@ start_prod() {
         fi
     fi
 
-    # 构建前端
-    echo "构建前端资源..."
-    cd frontend
-    npm run build
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}❌ 前端构建失败${NC}"
+    # 检查是否已有构建文件
+    if [ ! -f "static/index.html" ]; then
+        echo -e "${YELLOW}⚠️  未找到构建文件，开始构建前端...${NC}"
+        # 构建前端
+        echo "构建前端资源..."
+        cd frontend
+        npm run build
+        if [ $? -ne 0 ]; then
+            echo -e "${RED}❌ 前端构建失败${NC}"
+            cd ..
+            exit 1
+        fi
         cd ..
-        exit 1
+        echo -e "${GREEN}✓ 前端构建完成${NC}"
+    else
+        echo -e "${GREEN}✓ 找到已构建的前端文件${NC}"
+        read -p "是否重新构建前端? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "构建前端资源..."
+            cd frontend
+            npm run build
+            if [ $? -ne 0 ]; then
+                echo -e "${RED}❌ 前端构建失败${NC}"
+                cd ..
+                exit 1
+            fi
+            cd ..
+            echo -e "${GREEN}✓ 前端构建完成${NC}"
+        fi
     fi
-    cd ..
-    echo -e "${GREEN}✓ 前端构建完成${NC}"
     echo ""
 
     # 创建logs目录

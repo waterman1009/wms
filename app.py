@@ -41,15 +41,29 @@ def admin_required(f):
 
 @app.route('/')
 def index():
-    """主页"""
-    if 'user' not in session:
-        return redirect('/login')
-    return render_template('index.html')
+    """主页 - 返回 Vue 应用"""
+    return send_from_directory('static', 'index.html')
 
 @app.route('/login')
 def login_page():
-    """登录页面"""
-    return render_template('login.html')
+    """登录页面 - 返回 Vue 应用"""
+    return send_from_directory('static', 'index.html')
+
+# 处理 Vue Router 的所有路由
+@app.route('/<path:path>')
+def catch_all(path):
+    """捕获所有路由，返回 Vue 应用（用于 Vue Router 的 history 模式）"""
+    # 如果是 API 请求，返回 404
+    if path.startswith('api/'):
+        return jsonify({'success': False, 'message': 'API endpoint not found'}), 404
+    # 如果请求的是静态文件，尝试返回
+    if '.' in path:
+        try:
+            return send_from_directory('static', path)
+        except:
+            pass
+    # 其他所有请求返回 index.html（Vue Router 会处理）
+    return send_from_directory('static', 'index.html')
 
 @app.route('/api/login', methods=['POST'])
 def login():
