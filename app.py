@@ -4,13 +4,19 @@
 仓库管理系统 Web API
 """
 
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, send_from_directory
+from flask_cors import CORS
 from database import WarehouseDB
 from datetime import datetime
 import secrets
+import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='')
 app.secret_key = secrets.token_hex(16)
+
+# 配置 CORS 支持开发环境
+CORS(app, supports_credentials=True, origins=['http://localhost:3000'])
+
 db = WarehouseDB()
 
 # 登录验证装饰器

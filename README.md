@@ -1,236 +1,222 @@
 # 仓库管理系统
 
-一个基于Flask的现代化仓库管理系统，用于管理配件和成品的库存、生产和交易记录。
+一个基于 Flask + Vue 3 的现代化仓库管理系统，支持库存管理、出入库、发货、客户管理等功能。
 
-## ✨ 功能特点
+## ✨ 特性
 
-### 核心功能
-- 📦 **库存管理** - 实时查看配件和成品库存
-- ➕ **产品管理** - 添加、编辑、删除产品
-- 📥 **配件入库** - 配件入库操作，自动更新库存
-- 📤 **生产出库** - 选择成品生产，自动扣减配件库存
-- ⚠️ **配件损耗** - 记录配件损耗，支持批量登记
-- 📊 **交易历史** - 完整的交易记录，支持筛选和导出
-- 📥 **Excel导出** - 一键导出交易记录到Excel
-- 🔍 **智能搜索** - 配件选择支持自动完成搜索
-- 👥 **用户管理** - 多角色用户管理（管理员、仓库管理员、生产人员）
-- 🔐 **权限控制** - 基于角色的访问控制
-
-### 技术特点
-- 🚀 轻量级设计，易于部署
-- 💾 SQLite数据库，无需额外配置
-- 🎨 现代化UI设计，响应式布局
-- 🔒 Session会话管理，安全可靠
-- 📱 支持移动端访问
-
-## 🖥️ 系统要求
-
-### Windows系统
-- Windows 10/11 或 Windows Server 2016+
-- Python 3.8 或更高版本
-- 4GB内存（推荐8GB）
-- 500MB可用磁盘空间
-
-### macOS/Linux系统
-- macOS 10.15+ 或 Linux（Ubuntu 20.04+）
-- Python 3.8 或更高版本
-- 4GB内存
-- 500MB可用磁盘空间
+- 📦 **库存管理** - 产品查询、添加、编辑、删除
+- 📥 **配件入库** - 配件入库记录
+- 📤 **生产出库** - 成品生产配件出库
+- ⚠️ **配件损耗** - 配件损耗登记
+- 🚚 **成品发货** - 发货确认和记录
+- 📊 **交易历史** - 完整的交易记录查询
+- 👥 **客户管理** - 客户信息管理
+- 👤 **用户管理** - 多角色用户权限管理
+- 📈 **数据导出** - Excel 导出功能
 
 ## 🚀 快速开始
 
-### Windows系统
-
-#### 方法1：一键安装（推荐）
-1. 双击运行 `install.bat`
-2. 双击运行 `start.bat`
-3. 访问 http://localhost:8080
-4. 使用 admin / admin123 登录
-
-#### 方法2：手动安装
-```cmd
-# 1. 创建虚拟环境
-python -m venv venv
-
-# 2. 激活虚拟环境
-venv\Scripts\activate
-
-# 3. 安装依赖
-pip install -r requirements.txt
-
-# 4. 启动应用
-python app.py
-```
-
-### macOS/Linux系统
+### 1. 安装依赖
 
 ```bash
-# 1. 创建虚拟环境
-python3 -m venv venv
-
-# 2. 激活虚拟环境
-source venv/bin/activate
-
-# 3. 安装依赖
-pip install -r requirements.txt
-
-# 4. 启动应用
-python app.py
+./install.sh
 ```
 
-## 📖 详细文档
+### 2. 启动服务
 
-### Windows用户
-- [快速开始指南](快速开始.md) - 5分钟快速部署
-- [Windows部署指南](Windows部署指南.md) - 完整部署说明
-- [导出功能测试指南](导出功能测试指南.md) - 测试导出功能
+**开发模式（推荐用于开发）：**
+```bash
+./start.sh dev
+```
+访问：http://localhost:3000
 
-### 功能说明
-- [交易历史导出功能说明](交易历史导出功能说明.md)
-- [配件搜索功能说明](配件搜索功能说明.md)
-- [编辑产品弹窗优化说明](编辑产品弹窗优化说明.md)
+**生产模式（推荐用于部署）：**
+```bash
+./start.sh prod
+```
+访问：http://localhost:8080
 
-### 数据管理
-- [F16导入结果](F16导入结果.md)
-- [库存更新记录](库存更新记录.md)
+### 3. 停止服务
 
-## 🛠️ 管理脚本（Windows）
+```bash
+./stop.sh
+```
 
-### 安装和启动
-- `install.bat` - 一键安装脚本
-- `start.bat` - 启动应用（开发模式）
-- `start_production.bat` - 启动应用（生产模式）
-- `stop.bat` - 停止应用
+### 4. 查看状态
 
-### 维护工具
-- `check.bat` - 环境检查
-- `backup.bat` - 数据备份
-- `install_service.bat` - 安装为Windows服务
+```bash
+./status.sh
+```
 
-## 👤 默认账号
+## 🔐 默认账号
 
-- **用户名**: admin
-- **密码**: admin123
-- **角色**: 系统管理员
+- **用户名：** admin
+- **密码：** admin123
 
-⚠️ **重要**: 首次登录后请立即修改密码！
+⚠️ 首次登录后请立即修改密码！
 
-## 📊 系统架构
+## 📖 文档
+
+- [快速开始指南](QUICKSTART.md) - 三步启动系统
+- [项目结构说明](PROJECT_STRUCTURE.md) - 详细的目录结构
+- [脚本使用说明](SCRIPTS.md) - 详细的脚本使用指南
+- [前端开发文档](frontend/README.md) - Vue 前端开发说明
+- [系统功能说明](docs/系统功能总结.md) - 完整的功能说明
+- [部署文档](docs/DEPLOY.md) - 生产环境部署指南
+- [更新总结](SUMMARY.md) - 最新更新内容
+
+## 🛠️ 技术栈
+
+### 后端
+- Python 3.8+
+- Flask 3.0
+- Flask-CORS
+- SQLite
+- openpyxl
+
+### 前端
+- Vue 3
+- Vite 5
+- Vue Router 4
+- Axios
+
+## 📁 项目结构
 
 ```
 仓库管理系统/
-├── app.py                 # Flask应用主程序
-├── database.py            # 数据库操作
-├── models.py              # 数据模型
-├── requirements.txt       # Python依赖
-├── warehouse.db          # SQLite数据库（自动生成）
-├── templates/            # HTML模板
-│   ├── index.html       # 主页面
-│   └── login.html       # 登录页面
-├── backup/              # 备份目录（自动创建）
-└── venv/                # 虚拟环境（自动创建）
+├── app.py                  # Flask 后端主程序
+├── database.py             # 数据库操作
+├── models.py               # 数据模型
+├── requirements.txt        # Python 依赖
+├── warehouse.db            # SQLite 数据库
+├── frontend/               # Vue 前端项目
+│   ├── src/
+│   │   ├── api/           # API 接口
+│   │   ├── components/    # Vue 组件
+│   │   ├── views/         # 页面组件
+│   │   └── router/        # 路由配置
+│   └── package.json
+├── docs/                   # 详细文档
+├── scripts/                # 辅助脚本
+├── data/                   # 数据文件
+├── logs/                   # 日志文件
+├── install.sh             # 安装脚本
+├── start.sh               # 启动脚本
+├── stop.sh                # 停止脚本
+└── status.sh              # 状态查看脚本
 ```
 
-## 🔐 安全建议
+详细说明请查看 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
 
-1. **修改默认密码** - 首次登录后立即修改
-2. **定期备份** - 运行 `backup.bat` 备份数据
-3. **限制访问** - 仅在需要时开放局域网访问
-4. **使用强密码** - 为所有用户设置强密码
-5. **定期更新** - 保持Python和依赖包最新
+## 🎯 功能模块
 
-## 🌐 局域网访问
+### 库存管理
+- 产品列表查询（支持分页和搜索）
+- 添加产品（配件/成品）
+- 编辑产品信息
+- 删除产品
+- 成品配件配置
 
-### 1. 配置防火墙
-允许8080端口的入站连接
+### 出入库管理
+- 配件入库
+- 生产出库（配件消耗）
+- 配件损耗登记
 
-### 2. 获取IP地址
-```cmd
-ipconfig          # Windows
-ifconfig          # macOS/Linux
+### 销售管理
+- 成品发货（带二次确认）
+- 发货记录查询
+- 客户管理
+
+### 统计查询
+- 交易历史查询
+- 日期范围筛选
+- 类型筛选
+- Excel 导出
+
+### 系统管理
+- 用户管理（管理员）
+- 客户管理（管理员）
+- 角色权限控制
+
+## 👥 用户角色
+
+- **系统管理员（ADMIN）** - 完全权限
+- **仓库管理员（MANAGER）** - 管理权限
+- **生产人员（WORKER）** - 基础操作权限
+
+## 🔧 开发模式 vs 生产模式
+
+### 开发模式
+- 前后端分离运行
+- 支持热更新
+- 前端：http://localhost:3000
+- 后端：http://localhost:8080
+- 适合开发调试
+
+### 生产模式
+- 前端构建为静态文件
+- 单一服务运行
+- 访问：http://localhost:8080
+- 性能优化
+- 适合生产部署
+
+## 📝 常用命令
+
+```bash
+# 安装依赖
+./install.sh
+
+# 启动开发环境
+./start.sh dev
+
+# 启动生产环境
+./start.sh prod
+
+# 停止服务
+./stop.sh
+
+# 查看状态
+./status.sh
+
+# 查看日志
+./logs.sh
+
+# 查看实时日志
+tail -f logs/backend_*.log
+tail -f logs/frontend_*.log
 ```
-
-### 3. 访问
-局域网内其他设备访问：`http://[你的IP]:8080`
-
-## 📦 依赖包
-
-- Flask==3.0.0 - Web框架
-- tabulate==0.9.0 - 表格格式化
-- openpyxl==3.1.2 - Excel文件操作
-
-## 🔄 数据备份
-
-### 自动备份（Windows）
-运行 `backup.bat`，会自动：
-- 备份数据库文件
-- 备份Excel文件
-- 备份配置文件
-- 清理30天前的旧备份
-
-### 手动备份
-复制以下文件：
-- `warehouse.db` - 数据库
-- `20-12月半成品发料.xlsx` - Excel数据
 
 ## 🐛 故障排除
 
 ### 端口被占用
-```cmd
-# Windows
-netstat -ano | findstr :8080
-taskkill /PID <进程ID> /F
-
-# macOS/Linux
-lsof -i :8080
-kill -9 <进程ID>
+```bash
+./stop.sh
+# 或
+lsof -ti:8080 | xargs kill -9
+lsof -ti:3000 | xargs kill -9
 ```
 
-### Python命令不存在
-- 确保Python已安装
-- 确保已添加到PATH环境变量
-- 重启命令提示符
-
-### 依赖安装失败
-```cmd
-# 使用国内镜像
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+### 依赖问题
+```bash
+# 重新安装
+rm -rf venv frontend/node_modules
+./install.sh
 ```
 
-## 📈 性能优化
-
-1. **使用SSD** - 将数据库放在SSD上
-2. **增加内存** - 推荐8GB以上
-3. **定期清理** - 清理旧的交易记录
-4. **生产服务器** - 使用waitress替代Flask内置服务器
-
-## 🤝 贡献
-
-欢迎提交Issue和Pull Request！
+### 查看错误日志
+```bash
+tail -f logs/backend_*.log
+tail -f logs/frontend_*.log
+```
 
 ## 📄 许可证
 
 MIT License
 
-## 📞 技术支持
+## 🤝 贡献
 
-如遇到问题，请提供：
-- 操作系统版本
-- Python版本
-- 错误信息截图
-- 操作步骤
+欢迎提交 Issue 和 Pull Request！
 
-## 🎉 更新日志
+## 📧 联系方式
 
-### v1.0.0 (2024-01-17)
-- ✨ 初始版本发布
-- ✨ 基础库存管理功能
-- ✨ 用户权限管理
-- ✨ 交易历史记录
-- ✨ Excel导出功能
-- ✨ 配件搜索功能
-- ✨ Windows一键部署脚本
-
-## 🙏 致谢
-
-感谢所有使用和支持本项目的用户！
+如有问题，请提交 Issue。

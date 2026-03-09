@@ -14,8 +14,8 @@ ENV/
 *.sqlite3
 
 # Logs
-logs/*.log
-logs/*.pid
+logs/
+*.log
 
 # IDE
 .vscode/
@@ -28,6 +28,21 @@ logs/*.pid
 .DS_Store
 Thumbs.db
 
-# Backup files
+# Node
+node_modules/
+dist/
+.cache/
+
+# Build
+build/
+static/
+
+# Data
+data/*.xlsx
+data/*.xls
+!data/产品配件.xlsx
+
+# Temp
+*.tmp
 *.bak
-backup_*.tar.gz
+*.pid
