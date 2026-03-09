@@ -36,7 +36,7 @@ echo ""
 echo "检查Node.js环境..."
 if ! command -v node &> /dev/null; then
     echo -e "${YELLOW}⚠️  警告: 未找到Node.js${NC}"
-    echo "前端开发需要Node.js 16+，请访问: https://nodejs.org/"
+    echo "前端开发需要Node.js 14.18+，推荐 18+，请访问: https://nodejs.org/"
     echo "如果只使用生产模式，可以跳过此步骤"
     read -p "是否继续安装后端? (y/n) " -n 1 -r
     echo
@@ -47,6 +47,17 @@ if ! command -v node &> /dev/null; then
 else
     NODE_VERSION=$(node --version)
     echo -e "${GREEN}✓ 找到Node.js版本: $NODE_VERSION${NC}"
+    
+    # 检查 Node.js 版本是否满足要求
+    NODE_MAJOR=$(node --version | cut -d'.' -f1 | sed 's/v//')
+    if [ "$NODE_MAJOR" -lt 14 ]; then
+        echo -e "${RED}❌ 错误: Node.js 版本过低 (需要 14.18+)${NC}"
+        echo "请升级 Node.js: https://nodejs.org/"
+        exit 1
+    elif [ "$NODE_MAJOR" -lt 18 ]; then
+        echo -e "${YELLOW}⚠️  警告: Node.js 版本较低 (当前 $NODE_VERSION, 推荐 18+)${NC}"
+        echo "当前版本可以运行，但推荐升级以获得更好的性能"
+    fi
     
     if ! command -v npm &> /dev/null; then
         echo -e "${RED}❌ 错误: 未找到npm${NC}"
