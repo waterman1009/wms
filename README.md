@@ -58,12 +58,11 @@
 ## 📖 文档
 
 - [快速开始指南](QUICKSTART.md) - 三步启动系统
-- [项目结构说明](PROJECT_STRUCTURE.md) - 详细的目录结构
 - [脚本使用说明](SCRIPTS.md) - 详细的脚本使用指南
 - [前端开发文档](frontend/README.md) - Vue 前端开发说明
 - [系统功能说明](docs/系统功能总结.md) - 完整的功能说明
 - [部署文档](docs/DEPLOY.md) - 生产环境部署指南
-- [更新总结](SUMMARY.md) - 最新更新内容
+- [Ant Design 重构总结](ANTD_REFACTOR_SUMMARY.md) - UI 组件库重构说明
 
 ## 🛠️ 技术栈
 
@@ -106,7 +105,7 @@
 └── status.sh              # 状态查看脚本
 ```
 
-详细说明请查看 [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md)
+详细说明请查看 [ANTD_REFACTOR_SUMMARY.md](ANTD_REFACTOR_SUMMARY.md)
 
 ## 🎯 功能模块
 

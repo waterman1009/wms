@@ -113,15 +113,15 @@
 ./stop.sh
 ```
 
-### 场景 2：测试生产构建
+### 场景 2：生产构建
 
 ```bash
 # 1. 构建并启动生产环境
 ./start.sh prod
 
-# 2. 访问 http://localhost:8080 测试
+# 2. 访问 http://localhost:8080 验证
 
-# 3. 测试完成后停止
+# 3. 验证完成后停止
 ./stop.sh
 ```
 
@@ -290,7 +290,7 @@ rm -rf venv frontend/node_modules
 ## 💡 开发建议
 
 1. **日常开发**：使用 `./start.sh dev`，享受热更新
-2. **测试部署**：使用 `./start.sh prod`，验证生产构建
+2. **生产部署**：使用 `./start.sh prod`，验证生产构建
 3. **定期检查**：使用 `./status.sh` 查看服务状态
 4. **调试问题**：使用 `./logs.sh` 查看实时日志
 5. **切换模式**：先 `./stop.sh` 再启动新模式

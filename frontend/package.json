@@ -11,9 +11,12 @@
     "node": ">=14.18.0"
   },
   "dependencies": {
+    "@ant-design/icons-vue": "^7.0.1",
+    "@vueuse/core": "^14.2.1",
+    "ant-design-vue": "^4.2.6",
+    "axios": "^1.6.0",
     "vue": "^3.4.0",
-    "vue-router": "^4.2.0",
-    "axios": "^1.6.0"
+    "vue-router": "^4.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.5.0",
