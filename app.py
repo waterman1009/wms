@@ -157,6 +157,12 @@ def get_products():
         per_page=per_page
     )
     
+    # 获取库存总和
+    total_quantity = db.get_total_quantity(
+        product_type=product_type,
+        search=search
+    )
+    
     return jsonify({
         'success': True,
         'data': [{
@@ -172,7 +178,8 @@ def get_products():
             'per_page': per_page,
             'total': total,
             'total_pages': (total + per_page - 1) // per_page
-        }
+        },
+        'total_quantity': total_quantity
     })
 
 @app.route('/api/products', methods=['POST'])
@@ -724,6 +731,153 @@ def delete_customer(customer_id):
     """删除客户"""
     success, message = db.delete_customer(customer_id)
     return jsonify({'success': success, 'message': message})
+
+@app.route('/api/products/import', methods=['POST'])
+@admin_required
+def import_products():
+    """从Excel导入产品和配件"""
+    if 'file' not in request.files:
+        return jsonify({'success': False, 'message': '未上传文件'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'success': False, 'message': '未选择文件'})
+    
+    if not file.filename.endswith(('.xlsx', '.xls')):
+        return jsonify({'success': False, 'message': '只支持Excel文件（.xlsx或.xls）'})
+    
+    try:
+        import openpyxl
+        import io
+        
+        # 读取Excel文件
+        file_content = file.read()
+        wb = openpyxl.load_workbook(io.BytesIO(file_content))
+        
+        # 存储产品ID映射
+        product_map = {}
+        components_set = set()
+        finished_products = {}  # {成品名: [配件列表]}
+        
+        # 遍历所有工作表
+        for sheet_name in wb.sheetnames:
+            ws = wb[sheet_name]
+            
+            # 扫描所有行，找出所有产品名所在的行
+            product_start_rows = []
+            for row_idx in range(2, ws.max_row + 1):
+                row = list(ws[row_idx])
+                if len(row) > 1 and row[1].value:
+                    val = str(row[1].value).strip()
+                    if val not in ['产品名称', '配件', '']:
+                        product_start_rows.append(row_idx)
+            
+            # 处理每组产品
+            for group_idx, start_row in enumerate(product_start_rows):
+                # 确定这组产品的结束行
+                if group_idx + 1 < len(product_start_rows):
+                    end_row = product_start_rows[group_idx + 1] - 1
+                else:
+                    end_row = ws.max_row
+                
+                # 从开始行读取所有产品名
+                product_columns = {}  # {列索引: 产品名}
+                first_row = list(ws[start_row])
+                
+                col_idx = 1
+                while col_idx < len(first_row):
+                    cell_value = first_row[col_idx].value
+                    if cell_value and str(cell_value).strip() not in ['产品名称', '配件']:
+                        product_name = str(cell_value).strip()
+                        product_columns[col_idx] = product_name
+                        if product_name not in finished_products:
+                            finished_products[product_name] = []
+                    
+                    # 移动到下一组
+                    if col_idx + 3 < len(first_row) and first_row[col_idx + 3].value is None:
+                        col_idx += 4
+                    else:
+                        col_idx += 3
+                
+                # 读取这组产品的所有配件数据
+                for row_idx in range(start_row, end_row + 1):
+                    row = list(ws[row_idx])
+                    
+                    # 遍历每个产品列
+                    for prod_col_idx, product_name in product_columns.items():
+                        # 配件在产品列的下一列
+                        component_col_idx = prod_col_idx + 1
+                        if component_col_idx < len(row):
+                            component_value = row[component_col_idx].value
+                            if component_value:
+                                component_name = str(component_value).strip()
+                                if component_name not in ['产品名称', '配件']:
+                                    components_set.add(component_name)
+                                    finished_products[product_name].append(component_name)
+        
+        wb.close()
+        
+        # 统计信息
+        stats = {
+            'components_added': 0,
+            'components_skipped': 0,
+            'finished_added': 0,
+            'finished_skipped': 0,
+            'relations_added': 0
+        }
+        
+        # 1. 导入所有配件
+        for component_name in sorted(components_set):
+            success, message, product_id = db.add_product(component_name, 'COMPONENT', '个', '')
+            if success:
+                product_map[component_name] = product_id
+                stats['components_added'] += 1
+            else:
+                # 如果已存在，获取ID
+                product = db.get_product_by_name(component_name)
+                if product:
+                    product_map[component_name] = product[0]
+                stats['components_skipped'] += 1
+        
+        # 2. 导入所有成品
+        for finished_name in sorted(finished_products.keys()):
+            success, message, product_id = db.add_product(finished_name, 'FINISHED', '个', '')
+            if success:
+                product_map[finished_name] = product_id
+                stats['finished_added'] += 1
+            else:
+                product = db.get_product_by_name(finished_name)
+                if product:
+                    product_map[finished_name] = product[0]
+                stats['finished_skipped'] += 1
+        
+        # 3. 导入配件关系
+        for finished_name, components in finished_products.items():
+            if finished_name not in product_map:
+                continue
+            
+            finished_id = product_map[finished_name]
+            
+            for component_name in components:
+                if component_name not in product_map:
+                    continue
+                
+                component_id = product_map[component_name]
+                
+                success = db.add_product_component(finished_id, component_id, 1)
+                if success:
+                    stats['relations_added'] += 1
+        
+        return jsonify({
+            'success': True,
+            'message': '导入成功',
+            'stats': stats
+        })
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'message': f'导入失败: {str(e)}'})
 
 if __name__ == '__main__':
     print("仓库管理系统启动中...")

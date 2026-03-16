@@ -10,6 +10,16 @@
       
       <template #extra>
         <a-space>
+          <a-upload
+            :before-upload="handleBeforeUpload"
+            :show-upload-list="false"
+            accept=".xlsx,.xls"
+          >
+            <a-button type="primary" :loading="importing">
+              <import-outlined />
+              导入Excel
+            </a-button>
+          </a-upload>
           <a-button @click="loadInventory()" :loading="loading">
             <reload-outlined />
             刷新
@@ -129,6 +139,27 @@
             </a-button>
           </a-empty>
         </template>
+        
+        <template #summary>
+          <a-table-summary v-if="products.length > 0">
+            <a-table-summary-row>
+              <a-table-summary-cell :index="0" :col-span="3">
+                <span style="font-weight: 600; font-size: 14px;">库存总和</span>
+              </a-table-summary-cell>
+              <a-table-summary-cell :index="3" align="center">
+                <a-statistic
+                  :value="totalQuantity"
+                  :value-style="{ 
+                    color: '#1890ff',
+                    fontSize: '16px',
+                    fontWeight: 'bold'
+                  }"
+                />
+              </a-table-summary-cell>
+              <a-table-summary-cell :index="4" :col-span="3" />
+            </a-table-summary-row>
+          </a-table-summary>
+        </template>
       </a-table>
     </a-card>
 
@@ -217,9 +248,10 @@ import {
   EditOutlined,
   DeleteOutlined,
   PlusOutlined,
-  EyeOutlined
+  EyeOutlined,
+  ImportOutlined
 } from '@ant-design/icons-vue'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import api from '../api'
 import EditProductModal from '../components/EditProductModal.vue'
 
@@ -227,7 +259,9 @@ const products = ref([])
 const searchQuery = ref('')
 const currentType = ref(null)
 const loading = ref(false)
+const importing = ref(false)
 const pagination = ref({ page: 1, per_page: 20, total: 0, total_pages: 0 })
+const totalQuantity = ref(0)  // 所有库存总和
 const showEditModal = ref(false)
 const showDetailsModal = ref(false)
 const selectedProduct = ref(null)
@@ -335,6 +369,7 @@ const loadInventory = async (type, page = 1, pageSize = 20) => {
     const { data } = await api.getProducts(params)
     products.value = data.data
     pagination.value = data.pagination
+    totalQuantity.value = data.total_quantity || 0  // 获取库存总和
   } catch (error) {
     console.error('加载库存失败:', error)
     message.error('加载库存失败，请重试')
@@ -401,6 +436,83 @@ const handleProductSaved = () => {
   message.success('产品更新成功')
 }
 
+const handleBeforeUpload = async (file) => {
+  // 验证文件类型
+  const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' || 
+                  file.type === 'application/vnd.ms-excel' ||
+                  file.name.endsWith('.xlsx') ||
+                  file.name.endsWith('.xls')
+  
+  if (!isExcel) {
+    message.error('只能上传Excel文件（.xlsx或.xls）')
+    return false
+  }
+
+  // 验证文件大小（限制10MB）
+  const isLt10M = file.size / 1024 / 1024 < 10
+  if (!isLt10M) {
+    message.error('文件大小不能超过10MB')
+    return false
+  }
+
+  // 确认导入
+  Modal.confirm({
+    title: '确认导入',
+    content: '导入Excel将添加新的产品和配件信息。已存在的产品将被跳过。是否继续？',
+    okText: '确定',
+    cancelText: '取消',
+    onOk: async () => {
+      importing.value = true
+      const formData = new FormData()
+      formData.append('file', file)
+
+      try {
+        const { data } = await api.importProducts(formData)
+        
+        if (data.success) {
+          const stats = data.stats
+          const messages = []
+          
+          if (stats.components_added > 0) {
+            messages.push(`新增配件 ${stats.components_added} 个`)
+          }
+          if (stats.components_skipped > 0) {
+            messages.push(`跳过已存在配件 ${stats.components_skipped} 个`)
+          }
+          if (stats.finished_added > 0) {
+            messages.push(`新增成品 ${stats.finished_added} 个`)
+          }
+          if (stats.finished_skipped > 0) {
+            messages.push(`跳过已存在成品 ${stats.finished_skipped} 个`)
+          }
+          if (stats.relations_added > 0) {
+            messages.push(`建立配件关系 ${stats.relations_added} 条`)
+          }
+          
+          Modal.success({
+            title: '导入成功',
+            content: messages.join('，'),
+            okText: '确定'
+          })
+          
+          // 刷新列表
+          loadInventory()
+        } else {
+          message.error(data.message || '导入失败')
+        }
+      } catch (error) {
+        console.error('导入失败:', error)
+        message.error('导入失败: ' + (error.response?.data?.message || error.message))
+      } finally {
+        importing.value = false
+      }
+    }
+  })
+
+  // 阻止自动上传
+  return false
+}
+
 onMounted(() => {
   loadInventory()
 })
@@ -442,6 +554,15 @@ onMounted(() => {
 
 :deep(.ant-table-tbody > tr > td) {
   white-space: nowrap;
+}
+
+/* 表格汇总行样式 */
+:deep(.ant-table-summary) {
+  background-color: #fafafa;
+}
+
+:deep(.ant-table-summary .ant-table-cell) {
+  border-top: 2px solid #e8e8e8;
 }
 
 /* 小屏幕适配 */

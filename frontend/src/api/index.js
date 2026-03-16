@@ -33,6 +33,10 @@ export default {
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),
   getProductComponents: (id) => api.get(`/products/${id}/components`),
+  importProducts: (formData) => api.post('/products/import', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000  // 导入可能需要更长时间
+  }),
 
   // 库存操作
   stockIn: (data) => api.post('/stock/in', data),

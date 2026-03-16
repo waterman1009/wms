@@ -382,6 +382,33 @@ class WarehouseDB:
         
         return products, total
     
+    def get_total_quantity(self, product_type=None, search=None):
+        """获取库存总和（支持筛选和搜索）"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        # 构建查询条件
+        conditions = []
+        params = []
+        
+        if product_type:
+            conditions.append('product_type = ?')
+            params.append(product_type)
+        
+        if search:
+            conditions.append('name LIKE ?')
+            params.append(f'%{search}%')
+        
+        where_clause = ' AND '.join(conditions) if conditions else '1=1'
+        
+        # 查询库存总和
+        query = f'SELECT COALESCE(SUM(quantity), 0) FROM products WHERE {where_clause}'
+        cursor.execute(query, params)
+        total_quantity = cursor.fetchone()[0]
+        conn.close()
+        
+        return total_quantity
+    
     def get_transaction_history(self, product_name=None, trans_type=None, start_date=None, end_date=None, limit=50):
         """查询交易历史
         
@@ -478,6 +505,16 @@ class WarehouseDB:
         cursor = conn.cursor()
         cursor.execute('SELECT product_id, name, product_type, quantity, unit, description FROM products WHERE product_id = ?',
                       (product_id,))
+        product = cursor.fetchone()
+        conn.close()
+        return product
+    
+    def get_product_by_name(self, name):
+        """根据名称获取产品信息"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT product_id, name, product_type, quantity, unit, description FROM products WHERE name = ?',
+                      (name,))
         product = cursor.fetchone()
         conn.close()
         return product
