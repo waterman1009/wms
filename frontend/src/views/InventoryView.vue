@@ -458,7 +458,7 @@ const handleBeforeUpload = async (file) => {
   // 确认导入
   Modal.confirm({
     title: '确认导入',
-    content: '导入Excel将添加新的产品和配件信息。已存在的产品将被跳过。是否继续？',
+    content: '导入Excel将添加新的产品和配件信息；如果Excel中带有库存数量，则会用该数量覆盖系统库存，空库存不会覆盖。是否继续？',
     okText: '确定',
     cancelText: '取消',
     onOk: async () => {
@@ -487,6 +487,9 @@ const handleBeforeUpload = async (file) => {
           }
           if (stats.relations_added > 0) {
             messages.push(`建立配件关系 ${stats.relations_added} 条`)
+          }
+          if (stats.quantities_updated > 0) {
+            messages.push(`覆盖库存 ${stats.quantities_updated} 条`)
           }
           
           Modal.success({

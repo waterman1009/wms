@@ -749,6 +749,63 @@ def import_products():
     try:
         import openpyxl
         import io
+
+        def normalize_text(value):
+            if value is None:
+                return None
+            text = str(value).strip()
+            return text or None
+
+        def parse_quantity(value, sheet_name, cell_ref):
+            if value is None:
+                return None
+
+            if isinstance(value, str):
+                cleaned = value.strip().replace(',', '')
+                if not cleaned:
+                    return None
+                value = cleaned
+
+            try:
+                quantity = int(float(value))
+            except (TypeError, ValueError):
+                raise ValueError(f'{sheet_name} 工作表 {cell_ref} 的库存数量不是有效整数')
+
+            if quantity < 0:
+                raise ValueError(f'{sheet_name} 工作表 {cell_ref} 的库存数量不能为负数')
+
+            return quantity
+
+        def collect_groups(ws):
+            groups = []
+
+            for col_idx in range(1, ws.max_column + 1):
+                header = normalize_text(ws.cell(1, col_idx).value)
+                if header != '产品名称':
+                    continue
+
+                next_col = col_idx + 1
+                product_qty_col = None
+                if normalize_text(ws.cell(1, next_col).value) == '库存数量':
+                    product_qty_col = next_col
+                    next_col += 1
+
+                if normalize_text(ws.cell(1, next_col).value) != '配件':
+                    continue
+
+                component_col = next_col
+                component_qty_col = None
+                if normalize_text(ws.cell(1, next_col + 1).value) == '库存数量':
+                    component_qty_col = next_col + 1
+
+                groups.append({
+                    'product_name_col': col_idx,
+                    'product_qty_col': product_qty_col,
+                    'component_col': component_col,
+                    'component_qty_col': component_qty_col
+                })
+
+            return groups
         
         # 读取Excel文件
         file_content = file.read()
@@ -758,62 +815,53 @@ def import_products():
         product_map = {}
         components_set = set()
         finished_products = {}  # {成品名: [配件列表]}
+        product_quantities = {}
+        component_quantities = {}
         
         # 遍历所有工作表
         for sheet_name in wb.sheetnames:
             ws = wb[sheet_name]
-            
-            # 扫描所有行，找出所有产品名所在的行
-            product_start_rows = []
-            for row_idx in range(2, ws.max_row + 1):
-                row = list(ws[row_idx])
-                if len(row) > 1 and row[1].value:
-                    val = str(row[1].value).strip()
-                    if val not in ['产品名称', '配件', '']:
-                        product_start_rows.append(row_idx)
-            
-            # 处理每组产品
-            for group_idx, start_row in enumerate(product_start_rows):
-                # 确定这组产品的结束行
-                if group_idx + 1 < len(product_start_rows):
-                    end_row = product_start_rows[group_idx + 1] - 1
-                else:
-                    end_row = ws.max_row
-                
-                # 从开始行读取所有产品名
-                product_columns = {}  # {列索引: 产品名}
-                first_row = list(ws[start_row])
-                
-                col_idx = 1
-                while col_idx < len(first_row):
-                    cell_value = first_row[col_idx].value
-                    if cell_value and str(cell_value).strip() not in ['产品名称', '配件']:
-                        product_name = str(cell_value).strip()
-                        product_columns[col_idx] = product_name
-                        if product_name not in finished_products:
-                            finished_products[product_name] = []
-                    
-                    # 移动到下一组
-                    if col_idx + 3 < len(first_row) and first_row[col_idx + 3].value is None:
-                        col_idx += 4
-                    else:
-                        col_idx += 3
-                
-                # 读取这组产品的所有配件数据
-                for row_idx in range(start_row, end_row + 1):
-                    row = list(ws[row_idx])
-                    
-                    # 遍历每个产品列
-                    for prod_col_idx, product_name in product_columns.items():
-                        # 配件在产品列的下一列
-                        component_col_idx = prod_col_idx + 1
-                        if component_col_idx < len(row):
-                            component_value = row[component_col_idx].value
-                            if component_value:
-                                component_name = str(component_value).strip()
-                                if component_name not in ['产品名称', '配件']:
-                                    components_set.add(component_name)
-                                    finished_products[product_name].append(component_name)
+
+            groups = collect_groups(ws)
+            if not groups:
+                continue
+
+            for group in groups:
+                current_product_name = None
+
+                for row_idx in range(2, ws.max_row + 1):
+                    product_name = normalize_text(ws.cell(row_idx, group['product_name_col']).value)
+                    if product_name and product_name not in ['产品名称', '配件']:
+                        current_product_name = product_name
+                        if current_product_name not in finished_products:
+                            finished_products[current_product_name] = []
+
+                        if group['product_qty_col'] is not None:
+                            quantity = parse_quantity(
+                                ws.cell(row_idx, group['product_qty_col']).value,
+                                sheet_name,
+                                ws.cell(row_idx, group['product_qty_col']).coordinate
+                            )
+                            if quantity is not None:
+                                product_quantities[current_product_name] = quantity
+
+                    if not current_product_name:
+                        continue
+
+                    component_name = normalize_text(ws.cell(row_idx, group['component_col']).value)
+                    if component_name and component_name not in ['产品名称', '配件']:
+                        components_set.add(component_name)
+                        if component_name not in finished_products[current_product_name]:
+                            finished_products[current_product_name].append(component_name)
+
+                        if group['component_qty_col'] is not None:
+                            quantity = parse_quantity(
+                                ws.cell(row_idx, group['component_qty_col']).value,
+                                sheet_name,
+                                ws.cell(row_idx, group['component_qty_col']).coordinate
+                            )
+                            if quantity is not None:
+                                component_quantities[component_name] = quantity
         
         wb.close()
         
@@ -823,7 +871,8 @@ def import_products():
             'components_skipped': 0,
             'finished_added': 0,
             'finished_skipped': 0,
-            'relations_added': 0
+            'relations_added': 0,
+            'quantities_updated': 0
         }
         
         # 1. 导入所有配件
@@ -838,6 +887,10 @@ def import_products():
                 if product:
                     product_map[component_name] = product[0]
                 stats['components_skipped'] += 1
+
+            if component_name in product_map and component_name in component_quantities:
+                db.set_product_quantity(product_map[component_name], component_quantities[component_name])
+                stats['quantities_updated'] += 1
         
         # 2. 导入所有成品
         for finished_name in sorted(finished_products.keys()):
@@ -850,6 +903,10 @@ def import_products():
                 if product:
                     product_map[finished_name] = product[0]
                 stats['finished_skipped'] += 1
+
+            if finished_name in product_map and finished_name in product_quantities:
+                db.set_product_quantity(product_map[finished_name], product_quantities[finished_name])
+                stats['quantities_updated'] += 1
         
         # 3. 导入配件关系
         for finished_name, components in finished_products.items():
@@ -863,8 +920,11 @@ def import_products():
                     continue
                 
                 component_id = product_map[component_name]
-                
-                success = db.add_product_component(finished_id, component_id, 1)
+
+                if db.has_product_component(finished_id, component_id):
+                    continue
+
+                success, _ = db.add_product_component(finished_id, component_id, 1)
                 if success:
                     stats['relations_added'] += 1
         
@@ -883,4 +943,3 @@ if __name__ == '__main__':
     print("仓库管理系统启动中...")
     print("访问地址: http://localhost:8080")
     app.run(debug=True, host='0.0.0.0', port=8080)
-

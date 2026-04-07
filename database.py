@@ -138,6 +138,30 @@ class WarehouseDB:
         except Exception as e:
             conn.close()
             return False, f"添加失败: {str(e)}"
+
+    def has_product_component(self, finished_product_id, component_id):
+        """检查成品配件关系是否已存在"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'SELECT 1 FROM product_components WHERE finished_product_id = ? AND component_id = ? LIMIT 1',
+            (finished_product_id, component_id)
+        )
+        exists = cursor.fetchone() is not None
+        conn.close()
+        return exists
+
+    def set_product_quantity(self, product_id, quantity):
+        """直接覆盖产品库存数量"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            'UPDATE products SET quantity = ?, updated_at = ? WHERE product_id = ?',
+            (quantity, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), product_id)
+        )
+        conn.commit()
+        conn.close()
+        return True
     
     def get_product_components(self, finished_product_id):
         """获取成品所需的配件列表"""
