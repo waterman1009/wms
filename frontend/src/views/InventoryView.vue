@@ -241,7 +241,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, reactive } from 'vue'
+import { ref, computed, onMounted, reactive, h } from 'vue'
 import {
   DatabaseOutlined,
   ReloadOutlined,
@@ -422,6 +422,16 @@ const deleteProduct = async (id) => {
     if (data.success) {
       message.success(data.message)
       loadInventory()
+    } else if (data.references && data.references.length > 0) {
+      Modal.warning({
+        title: '配件无法删除',
+        content: h('div', [
+          h('p', '该配件已被以下成品引用，请先调整成品配件关系后再删除：'),
+          h('ul', { class: 'reference-product-list' }, data.references.map(item =>
+            h('li', { key: item.product_id }, item.name)
+          ))
+        ])
+      })
     } else {
       message.error(data.message)
     }

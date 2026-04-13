@@ -500,6 +500,32 @@ class WarehouseDB:
         """删除产品"""
         conn = self.get_connection()
         cursor = conn.cursor()
+
+        cursor.execute('SELECT product_type FROM products WHERE product_id = ?', (product_id,))
+        product = cursor.fetchone()
+        if not product:
+            conn.close()
+            return False, "产品不存在", []
+
+        product_type = product[0]
+
+        if product_type == 'COMPONENT':
+            cursor.execute('''
+                SELECT p.product_id, p.name
+                FROM product_components pc
+                JOIN products p ON pc.finished_product_id = p.product_id
+                WHERE pc.component_id = ?
+                ORDER BY p.name
+            ''', (product_id,))
+            referenced_products = [
+                {'product_id': row[0], 'name': row[1]}
+                for row in cursor.fetchall()
+            ]
+
+            if referenced_products:
+                conn.close()
+                names = '、'.join([item['name'] for item in referenced_products])
+                return False, f"该配件被以下成品引用，无法删除：{names}", referenced_products
         
         # 检查是否有交易记录
         cursor.execute('SELECT COUNT(*) FROM transactions WHERE product_id = ?', (product_id,))
@@ -507,7 +533,7 @@ class WarehouseDB:
         
         if trans_count > 0:
             conn.close()
-            return False, "该产品有交易记录，无法删除"
+            return False, "该产品有交易记录，无法删除", []
         
         # 检查是否被成品引用
         cursor.execute('SELECT COUNT(*) FROM product_components WHERE component_id = ? OR finished_product_id = ?', 
@@ -516,12 +542,12 @@ class WarehouseDB:
         
         if comp_count > 0:
             conn.close()
-            return False, "该产品被其他产品引用，无法删除"
+            return False, "该产品被其他产品引用，无法删除", []
         
         cursor.execute('DELETE FROM products WHERE product_id = ?', (product_id,))
         conn.commit()
         conn.close()
-        return True, "产品删除成功"
+        return True, "产品删除成功", []
     
     def get_product_by_id(self, product_id):
         """根据ID获取产品信息"""

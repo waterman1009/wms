@@ -493,8 +493,11 @@ def update_product(product_id):
 @app.route('/api/products/<int:product_id>', methods=['DELETE'])
 def delete_product_route(product_id):
     """删除产品"""
-    success, message = db.delete_product(product_id)
-    return jsonify({'success': success, 'message': message})
+    success, message, references = db.delete_product(product_id)
+    response = {'success': success, 'message': message}
+    if references:
+        response['references'] = references
+    return jsonify(response)
 
 @app.route('/api/shipments', methods=['POST'])
 @login_required
