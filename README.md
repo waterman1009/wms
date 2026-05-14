@@ -22,6 +22,18 @@
 ./install.sh
 ```
 
+如果服务器只有系统 Python 3.6，可以按 `lof_project` 的方式先安装项目本地运行时：
+
+```bash
+scripts/bootstrap_runtime.sh
+```
+
+这个脚本会在项目目录下安装 `.runtime/miniconda`、创建 `.runtime/py311`，再用该 Python 创建项目 `venv`，不会替换系统自带 Python 3.6。已有可用 Python 时也可以直接指定：
+
+```bash
+PYTHON_BIN=/path/to/python3.11 ./install.sh
+```
+
 ### 2. 启动服务
 
 **开发模式（推荐用于开发）：**

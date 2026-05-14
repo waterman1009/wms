@@ -14,22 +14,35 @@ NC='\033[0m' # No Color
 
 # 检查Python版本
 echo "检查Python环境..."
-if ! command -v python3 &> /dev/null; then
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+if ! command -v "$PYTHON_BIN" &> /dev/null; then
     echo -e "${RED}❌ 错误: 未找到Python3${NC}"
     echo "请先安装Python 3.8或更高版本"
+    echo "也可以通过 PYTHON_BIN=/path/to/python3 ./install.sh 指定Python"
     echo "访问: https://www.python.org/downloads/"
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+PYTHON_VERSION=$("$PYTHON_BIN" --version 2>&1 | awk '{print $2}')
 echo -e "${GREEN}✓ 找到Python版本: $PYTHON_VERSION${NC}"
 
-# 检查pip
-if ! command -v pip3 &> /dev/null; then
-    echo -e "${RED}❌ 错误: 未找到pip3${NC}"
+PYTHON_OK=$("$PYTHON_BIN" - <<'PY'
+import sys
+print("1" if sys.version_info >= (3, 8) else "0")
+PY
+)
+if [ "$PYTHON_OK" != "1" ]; then
+    echo -e "${RED}❌ 错误: Python版本过低，需要 3.8 或更高版本${NC}"
+    echo "当前版本: $PYTHON_VERSION"
     exit 1
 fi
-echo -e "${GREEN}✓ pip3 已安装${NC}"
+
+# 检查pip
+if ! "$PYTHON_BIN" -m pip --version &> /dev/null; then
+    echo -e "${RED}❌ 错误: 当前Python环境未找到pip${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✓ pip 已安装${NC}"
 
 # 检查Node.js和npm
 echo ""
@@ -72,15 +85,31 @@ fi
 echo ""
 echo "创建Python虚拟环境..."
 if [ -d "venv" ]; then
-    echo -e "${YELLOW}虚拟环境已存在，跳过创建${NC}"
-else
-    python3 -m venv venv
+    VENV_VERSION=$(./venv/bin/python -c 'import sys; print(".".join(map(str, sys.version_info[:3])))' 2>/dev/null || true)
+    VENV_OK=$(./venv/bin/python - <<'PY' 2>/dev/null || echo "0"
+import sys
+print("1" if sys.version_info >= (3, 8) else "0")
+PY
+)
+    if [ "$VENV_OK" != "1" ]; then
+        echo -e "${YELLOW}现有虚拟环境版本不满足要求 (${VENV_VERSION:-未知})，重新创建${NC}"
+        rm -rf venv
+    else
+        echo -e "${YELLOW}虚拟环境已存在，跳过创建 (Python $VENV_VERSION)${NC}"
+    fi
+fi
+
+if [ ! -d "venv" ]; then
+    echo "使用 $PYTHON_BIN 创建虚拟环境"
+    "$PYTHON_BIN" -m venv venv
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ 虚拟环境创建成功${NC}"
     else
         echo -e "${RED}❌ 虚拟环境创建失败${NC}"
         exit 1
     fi
+else
+    echo -e "${GREEN}✓ 使用现有虚拟环境${NC}"
 fi
 
 # 激活虚拟环境
